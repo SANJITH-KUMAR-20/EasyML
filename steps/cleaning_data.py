@@ -36,7 +36,7 @@ def clean_data(data : pd.DataFrame = None) -> Tuple[
         x_traain, x_test, y_train, y_test = data_cleaning.handle_data()
 
         logging.info("Cleaning and Splitting Successful...")
-    
+        return x_traain, x_test, y_train, y_test
     except Exception as e:
         logging.error(f"Error encountered {e}")
         raise e
