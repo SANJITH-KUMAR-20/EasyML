@@ -33,10 +33,10 @@ def clean_data(data : pd.DataFrame = None) -> Tuple[
 
         divide_strategy = DataSplitStrategy()
         data_cleaning = DataPrep(processed_data, divide_strategy)
-        x_traain, x_test, y_train, y_test = data_cleaning.handle_data()
+        x_train, x_test, y_train, y_test = data_cleaning.handle_data()
 
         logging.info("Cleaning and Splitting Successful...")
-        return x_traain, x_test, y_train, y_test
+        return x_train, x_test, y_train, y_test
     except Exception as e:
         logging.error(f"Error encountered {e}")
         raise e

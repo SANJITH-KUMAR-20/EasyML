@@ -47,9 +47,9 @@ class R2(Evaluation):
     def calculate_scores(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
         try:
             logging.info("Calculating R2 Score...")
-            r2_score = r2_score(y_true, y_pred)
-            logging.info(f"Successfully Calculated R2 score -> {r2_score}")
-            return r2_score
+            r2 = r2_score(y_true, y_pred)
+            logging.info(f"Successfully Calculated R2 score -> {r2}")
+            return r2
         except Exception as e:
             logging.error(f"R2 score calculation failed due to {e}")
             raise e

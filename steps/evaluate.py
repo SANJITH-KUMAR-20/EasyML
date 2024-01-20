@@ -8,7 +8,12 @@ from typing_extensions import Annotated
 from sklearn.base import RegressorMixin
 import pandas as pd
 
-@step
+from zenml.client import Client
+import mlflow
+
+tracker = Client().active_stack.experiment_tracker
+
+@step(experiment_tracker=tracker.name)
 def evaluate_model(model:RegressorMixin,
                    x_test: pd.DataFrame,
                     y_test: pd.DataFrame )->Tuple[
@@ -31,9 +36,11 @@ def evaluate_model(model:RegressorMixin,
     """
     prediction = model.predict(x_test)
     mse_class = MSE()
-    mse = mse_class.calculate_scores(y_test.to_numpy, prediction)
+    mse = mse_class.calculate_scores(y_test, prediction)
+    mlflow.log_metric("mse", mse)
 
     r2_score = R2()
-    r2 = r2_score.calculate_scores(y_test.to_numpy, prediction)
+    r2 = r2_score.calculate_scores(y_test, prediction)
+    mlflow.log_metric("r2", r2)
 
     return r2, mse

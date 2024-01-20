@@ -31,9 +31,9 @@ class DataPreprocessStrategy(DataStrategy):
             data = data.drop(
                 [
                     "order_approved_at",
-                    "order_delivered_carrier_data",
+                    "order_delivered_carrier_date",
                     "order_delivered_customer_date",
-                    "order_delivered_delivery_data",
+                    "order_estimated_delivery_date",
                     "order_purchase_timestamp"
                 ],
                 axis = 1
@@ -84,10 +84,6 @@ class DataPrep:
         ------------
         Args : data -> pd.DataFrame(Data to be processed)
         """
-
-        if not data:
-
-            logging.error(f"No data found")
 
         self.data = data
         self.strategy = strategy
