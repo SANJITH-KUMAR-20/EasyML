@@ -7,7 +7,7 @@ from steps.train import train_model
 from steps.evaluate import evaluate_model
 from steps.config import ModelNameConfig
 
-@pipeline(enable_cache= True)
+@pipeline(enable_cache= False)
 def training_pipeline(data_path : str) -> None:
     """
     Takes, cleanes and trains and evaluates th model

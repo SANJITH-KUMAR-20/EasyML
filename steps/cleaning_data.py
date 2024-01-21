@@ -6,6 +6,7 @@ from zenml import step
 from typing import Tuple
 from typing_extensions import Annotated
 
+
 @step
 def clean_data(data : pd.DataFrame = None) -> Tuple[
     Annotated[pd.DataFrame, "x_train"],
