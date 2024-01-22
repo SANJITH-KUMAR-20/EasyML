@@ -13,7 +13,7 @@ import mlflow
 
 tracker = Client().active_stack.experiment_tracker
 
-@step(experiment_tracker=tracker.name)
+@step(experiment_tracker=tracker.name, enable_cache= False)
 def evaluate_model(model:RegressorMixin,
                    x_test: pd.DataFrame,
                     y_test: pd.DataFrame )->Tuple[

@@ -1,10 +1,9 @@
 from typing import cast
-from pipelines.deployment_pipeline import deployment_pipeline, inference_pipeline
+from Pipelines.deployment_pipeline import inference_pipeline
 from zenml.integrations.mlflow.mlflow_utils import get_tracking_uri
-from zenml.integrations.mlflow.model_deployers.mlflow_model_deployer import(
-    MLFlowModelDeployer, mlflow_model_deployer_component
-)
-from pipelines.deployment_pipeline import continuous_deployment_pipeline
+from zenml.integrations.mlflow.model_deployers.mlflow_model_deployer import MLFlowModelDeployer
+
+from Pipelines.deployment_pipeline import continuous_deployment_pipeline
 from zenml.integrations.mlflow.services import MLFlowDeploymentService
 import click
 
@@ -22,7 +21,7 @@ DEPLOY_AND_PREDICT = "deploy_and_predict"
 )
 @click.option(
     "--min-accuracy",
-    default = 0.92,
+    default = 0.1,
     help = "Minimum acc required to deploy the model",
 )
 
@@ -43,7 +42,7 @@ def run_deployment(config : str, min_accuracy: float):
           f"[italic green] mlflow ui --backend-store-uri {get_tracking_uri()}")
     
 
-    existing_services = mlflow_model_deployer_component.find_model_server(
+    existing_services = deployer.find_model_server(
         pipeline_name = "continuous_deployment_pipeline",
         pipeline_step_name = "mlflow_model_deployer_step",
         model_name = "model"

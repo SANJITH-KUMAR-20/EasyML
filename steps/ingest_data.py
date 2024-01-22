@@ -21,7 +21,7 @@ class IngestData:
         logging.info(f"Ingesting data from {self.data_path}")
         return pd.read_csv(self.data_path)
     
-@step
+@step(enable_cache= False)
 def ingest_data(data_path: str) -> pd.DataFrame:
 
     """

@@ -7,7 +7,7 @@ from typing import Tuple
 from typing_extensions import Annotated
 
 
-@step
+@step(enable_cache= False)
 def clean_data(data : pd.DataFrame = None) -> Tuple[
     Annotated[pd.DataFrame, "x_train"],
     Annotated[pd.DataFrame, "x_test"],

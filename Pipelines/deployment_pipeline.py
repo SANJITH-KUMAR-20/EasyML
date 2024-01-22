@@ -52,3 +52,6 @@ def continuous_deployment_pipeline(
         workers = workers,
         timeout = timeout,
     )
+
+def inference_pipeline():
+    pass

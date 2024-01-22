@@ -12,7 +12,7 @@ from src.model_dev import LinearReg
 
 experiment_tracker = Client().active_stack.experiment_tracker
 
-@step(experiment_tracker = experiment_tracker.name)
+@step(experiment_tracker = experiment_tracker.name, enable_cache= False)
 def train_model(X_train: pd.DataFrame,
                 X_test: pd.DataFrame,
                 y_train: pd.DataFrame,
