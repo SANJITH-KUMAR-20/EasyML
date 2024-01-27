@@ -1,11 +1,15 @@
 import logging
 from abc import ABC, abstractmethod
 
+from typing import List
 import numpy as np
 from typing import Union
 import pandas as pd
 from pandas.core.api import Series as Series
+from sklearn.impute import IterativeImputer
 from sklearn.model_selection import train_test_split
+from sklearn.impute import *
+from sklearn.base import *
 
 class DataStrategy(ABC):
 
@@ -17,6 +21,91 @@ class DataStrategy(ABC):
     def handle_data(self, data: pd.DataFrame = None) -> Union[pd.DataFrame, pd.Series]:
         pass
 
+
+class Imputer(DataStrategy):
+
+    """Class for Imputing missing values"""
+
+    def __init__(self,data: pd.DataFrame):
+        self.data = data
+        self.data.fillna(np.nan)
+
+
+    def handle_data(self,column : str | list,Impute_Strategy : str = "Simple_Imputer", strategy : str = "mean", constant : int | str |float = None, n_nearest_features : int = None
+                    ,weights : str = "uniform") -> pd.DataFrame | pd.Series:
+        
+        """
+        function for imputation
+        """
+        if self.data == None:
+            raise Exception(ValueError)
+        if Impute_Strategy == "Simple_Imputer":
+            if not strategy == "constant" and constant:
+                raise Exception(f"Enter the constant Value")
+            self._simple_impute(column, strategy, constant)
+        elif Impute_Strategy == "Iterative_Imputer":
+            if not strategy == "constant" and constant:
+                raise Exception(f"Enter the constant Value")
+            self._iterative_imputer(column, strategy, constant, n_nearest_features)
+        elif Impute_Strategy == "KNN_Imputer":
+            if not n_nearest_features:
+                raise Exception(f"Enter the n_nearest_features")
+            self._knn_imputer(column, weights, n_nearest_features)
+        else:
+            raise Exception("No Such Impute Strategy")
+        
+        return self.data
+
+    def _simple_impute(self, column : str, strategy : str = "mean", constant : str | int | float = None) -> None:
+
+        imputer = SimpleImputer(missing_values= np.nan, strategy= strategy, fill_value= constant)
+        try:
+            self.data[column] = imputer.fit_transform(self.data["column"])
+        except Exception as e:
+            logging.error(f"Error: {e}")
+            raise e
+        
+    def _iterative_imputer(self, column : str, initial_strategy : str = "mean", constant : str | int |float = None, nn_features : int = None) -> None:
+        
+        imputer = IterativeImputer(missing_values= np.nan, initial_strategy=initial_strategy, fill_value = constant, n_nearest_features= nn_features)
+        try:
+            self.data[column] = imputer.fit_transform(self.data["column"])
+        except Exception as e:
+            logging.error(f"Error: {e}")
+            raise e
+        
+    def _knn_imputer(self, column : str, weights : str = "uniform", n_nearest_neigbours : int = 5) -> None:
+
+        imputer = KNNImputer(missing_values= np.nan, weights= weights, n_neighbors= n_nearest_neigbours)
+        try:
+            self.data[column] = imputer.fit_transform(self.data["column"])
+        except Exception as e:
+            logging.error(f"Error: {e}")
+            raise e
+
+class DataDrop(DataStrategy):
+
+    """
+    Class for dropping columns
+    """
+
+    def __init__(self,data: pd.DataFrame):
+        self.data = data
+
+    def handle_data(self, columns: list) -> pd.DataFrame | pd.Series:
+        
+        try:
+            data = self.data.drop(columns, axis = 1)
+
+        except Exception as e:
+            logging.error(f"Error: {e}")
+            raise e
+    
+        return data
+    
+            
+
+    
 
 class DataPreprocessStrategy(DataStrategy):
 

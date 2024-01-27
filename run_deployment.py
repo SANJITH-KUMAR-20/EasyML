@@ -34,7 +34,7 @@ def run_deployment(config : str, min_accuracy: float):
         continuous_deployment_pipeline(data_path= "Data/olist_customers_dataset.csv",
                                         min_accuracy = min_accuracy,
                                        workers = 3,
-                                       timeout = 60,)
+                                       timeout = 60)
     if predict:
         inference_pipeline()
 
