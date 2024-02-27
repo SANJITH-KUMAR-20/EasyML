@@ -6,11 +6,13 @@ import numpy as np
 from typing import Union
 import pandas as pd
 from pandas.core.api import Series as Series
-from sklearn.impute import IterativeImputer
+# from sklearn.impute import IterativeImputer
 from sklearn.model_selection import train_test_split
 from sklearn.impute import *
 from sklearn.base import *
+# from sklearn.experimental import enable_iterative_imputer
 
+# enable_iterative_imputer()
 class DataStrategy(ABC):
 
     """
@@ -43,10 +45,10 @@ class Imputer(DataStrategy):
             if not strategy == "constant" and constant:
                 raise Exception(f"Enter the constant Value")
             self._simple_impute(column, strategy, constant)
-        elif Impute_Strategy == "Iterative_Imputer":
-            if not strategy == "constant" and constant:
-                raise Exception(f"Enter the constant Value")
-            self._iterative_imputer(column, strategy, constant, n_nearest_features)
+        # elif Impute_Strategy == "Iterative_Imputer":
+        #     if not strategy == "constant" and constant:
+        #         raise Exception(f"Enter the constant Value")
+        #     self._iterative_imputer(column, strategy, constant, n_nearest_features)
         elif Impute_Strategy == "KNN_Imputer":
             if not n_nearest_features:
                 raise Exception(f"Enter the n_nearest_features")
@@ -65,14 +67,14 @@ class Imputer(DataStrategy):
             logging.error(f"Error: {e}")
             raise e
         
-    def _iterative_imputer(self, column : str, initial_strategy : str = "mean", constant : str | int |float = None, nn_features : int = None) -> None:
+    # def _iterative_imputer(self, column : str, initial_strategy : str = "mean", constant : str | int |float = None, nn_features : int = None) -> None:
         
-        imputer = IterativeImputer(missing_values= np.nan, initial_strategy=initial_strategy, fill_value = constant, n_nearest_features= nn_features)
-        try:
-            self.data[column] = imputer.fit_transform(self.data["column"])
-        except Exception as e:
-            logging.error(f"Error: {e}")
-            raise e
+    #     imputer = IterativeImputer(missing_values= np.nan, initial_strategy=initial_strategy, fill_value = constant, n_nearest_features= nn_features)
+    #     try:
+    #         self.data[column] = imputer.fit_transform(self.data["column"])
+    #     except Exception as e:
+    #         logging.error(f"Error: {e}")
+    #         raise e
         
     def _knn_imputer(self, column : str, weights : str = "uniform", n_nearest_neigbours : int = 5) -> None:
 
