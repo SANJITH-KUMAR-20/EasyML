@@ -39,10 +39,10 @@ class Imputer(DataStrategy):
         """
         function for imputation
         """
-        if self.data == None:
+        if self.data.empty:
             raise Exception(ValueError)
         if Impute_Strategy == "Simple_Imputer":
-            if not strategy == "constant" and constant:
+            if strategy == "constant" and not constant:
                 raise Exception(f"Enter the constant Value")
             self._simple_impute(column, strategy, constant)
         # elif Impute_Strategy == "Iterative_Imputer":
@@ -62,7 +62,7 @@ class Imputer(DataStrategy):
 
         imputer = SimpleImputer(missing_values= np.nan, strategy= strategy, fill_value= constant)
         try:
-            self.data[column] = imputer.fit_transform(self.data["column"])
+            self.data[column] = imputer.fit_transform(self.data[[column]])
         except Exception as e:
             logging.error(f"Error: {e}")
             raise e
@@ -80,7 +80,7 @@ class Imputer(DataStrategy):
 
         imputer = KNNImputer(missing_values= np.nan, weights= weights, n_neighbors= n_nearest_neigbours)
         try:
-            self.data[column] = imputer.fit_transform(self.data["column"])
+            self.data[column] = imputer.fit_transform(self.data[[column]])
         except Exception as e:
             logging.error(f"Error: {e}")
             raise e

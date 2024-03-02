@@ -10,12 +10,22 @@ st.set_page_config(page_title="EasyML", page_icon=":bar_chart:")
 page = st.sidebar.radio("Navigation", ["Home", "Manipulate Data", "Build Model", "Visualize Data", "Chat with PY", "Deploy Model"])
 
 parent_data_set = None
-# Home page
-if "button" not in st.session_state:
-        st.session_state.button = {}
 
-def clicked(button):
+#GLOBAL_SESSION_STATES
+if "button" not in st.session_state:
+    st.session_state.button = {}
+
+if "impute" not in st.session_state:
+    st.session_state.impute = {}
+
+# Home page
+
+def clicked(button : str, nested : bool = False, nested_key : str = None, strategy : str = None):
+    if not nested:
         st.session_state.button[button] = True
+    else:
+        if strategy == "impute":
+            st.session_state.impute[button][nested_key] = True
 
 if page == "Home":
     st.markdown('<p style="text-align: center;"><img src="Frontend\Data\logo-black.png" alt="Logo" style="border-radius: 50%; max-width: 200px;"></p>', unsafe_allow_html=True)
@@ -47,6 +57,8 @@ if page == "Home":
             if "data_Set" not in st.session_state:
                 st.session_state.data_set = {"parent_Data_set" : df}
             parent_data_set = df
+            if "data_set" in st.session_state:
+                st.session_state.data_set["current_state"] = st.session_state.data_set["parent_Data_set"]
 
         except:
             if not st.session_state.button["csv_upload"]:
@@ -58,21 +70,69 @@ if page == "Home":
 elif page == "Manipulate Data":
     st.title("Manipulate Data")
     st.write("Here you can process your data before selecting a training...")
-    if "data_set" in st.session_state:
-        st.session_state.data_set["manipulated_data"] = st.session_state.data_set["parent_Data_set"]
-    manipulated_data = st.session_state.data_set["manipulated_data"]
+    # if "data_set" in st.session_state:
+    #     st.session_state.data_set["current_state"] = st.session_state.data_set["parent_Data_set"]
+    current_state = st.session_state.data_set["current_state"]
     selected_operation = st.selectbox("Select the operation", ["None", "drop column","impute"])
 
     if selected_operation == "drop column":
         if "drop_button" not in st.session_state.button:
             st.session_state.button["drop_button"] = False
-        selected_columns = st.multiselect("select columns to drop",list(manipulated_data.columns))
+        selected_columns = st.multiselect("select columns to drop",list(current_state.columns))
         st.button("drop selected columns", on_click=clicked, args= ["drop_button"])
         if selected_columns and st.session_state.button["drop_button"]:
-            data_drop_strategy = drop_column(selected_columns, manipulated_data)
-            st.session_state.data_set["manipulated_data"] = data_drop_strategy
-            manipulated_data = st.session_state.data_set["manipulated_data"]
-            st.write(manipulated_data.head())
+            data_drop_strategy = drop_column(selected_columns, current_state)
+            st.session_state.data_set["current_state"] = data_drop_strategy
+        current_state = st.session_state.data_set["current_state"]
+        st.write(current_state.head())
+        st.session_state.button["drop_button"] = False
+
+    elif selected_operation == "impute":
+        if "impute_button" not in st.session_state.button:
+            st.session_state.button["impute_button"] = False
+        # st.session_state.button["impute_button"] = False
+        impute_strategies = st.multiselect("Select the impute strategy", ["Simple Imputer", "KNN Imputer"])
+        
+        for impute_strategy in impute_strategies:
+            if impute_strategy == "Simple Imputer":
+                if "Simple Imputer" not in st.session_state.impute:
+                    st.session_state.impute["Simple Imputer"] = {"set_params" : False, "columns" : [], "strategy" : "mean", "fill_value" : None, "impute" : False}
+                # st.session_state.impute["Simple Imputer"]["set_params"] = False
+                st.button(f"Set Parameters for {impute_strategy}", on_click= clicked, args= [impute_strategy, True,"set_params", "impute"])
+
+                if st.session_state.impute["Simple Imputer"]["set_params"]:
+
+                    strat = st.selectbox("Impute strategy", ["mean","median","constant"])
+                    affected_columns = st.multiselect("Columns to be imputed", list(st.session_state.data_set["current_state"].columns))
+                    st.session_state.impute["Simple Imputer"]["strategy"] = strat
+                    if strat == "constant":
+                        fill_val = st.text_input("Enter Fill_value")
+                        st.session_state.impute["Simple Imputer"]["fill_value"] = fill_val
+
+                    st.button("Impute",on_click=clicked,args=[impute_strategy, True,"impute", "impute"])
+                    if st.session_state.impute["Simple Imputer"]["impute"]:
+                        st.session_state.data_set["current_state"] = impute_columns(affected_columns, st.session_state.data_set["current_state"], "Simple_Imputer", st.session_state.impute["Simple Imputer"])
+                    st.write(st.session_state.data_set["current_state"])
+
+
+            if impute_strategy == "KNN Imputer":
+                if "KNN Imputer" not in st.session_state.impute:
+                    st.session_state.impute["KNN Imputer"] = {"set_params" : False, "columns" : [], "n_nearest_neigbours" : 3, "impute" : False,"strategy" : "mean", "fill_value" : None}
+                # st.session_state.impute["KNN Imputer"]["set_params"] = False
+                st.button(f"Set Parameters for {impute_strategy}", on_click= clicked, args= [impute_strategy, True,"set_params", "impute"])
+
+                if st.session_state.impute["KNN Imputer"]["set_params"]:
+
+                    n_nearest_neigbours = st.number_input("Enter the N Nearest Neighbours")
+                    affected_columns = st.multiselect("Columns to be imputed", list(st.session_state.data_set["current_state"].columns))
+                    st.session_state.impute["KNN Imputer"]["n_nearest_neigbours"] = n_nearest_neigbours
+
+                    st.button("Impute",on_click=clicked,args=[impute_strategy, True,"impute", "impute"])
+                    if st.session_state.button["impute_button"]:
+                        st.session_state.data_set["current_state"] = impute_columns(affected_columns, st.session_state.data_set["current_state"], "KNN_Imputer", st.session_state.impute["KNN Imputer"])
+                    st.write(st.session_state.data_set["current_state"])
+                
+
 
 
 
