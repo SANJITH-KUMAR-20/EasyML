@@ -96,20 +96,20 @@ elif page == "Manipulate Data":
         for impute_strategy in impute_strategies:
             if impute_strategy == "Simple Imputer":
                 if "Simple Imputer" not in st.session_state.impute:
-                    st.session_state.impute["Simple Imputer"] = {"set_params" : False, "columns" : [], "strategy" : "mean", "fill_value" : None, "impute" : False}
+                    st.session_state.impute["Simple Imputer"] = {"set_params" : False, "columns" : [], "strategy" : "mean", "fill_value" : None, "impute" : False, "n_nearest_neigbours" : 3}
                 # st.session_state.impute["Simple Imputer"]["set_params"] = False
                 st.button(f"Set Parameters for {impute_strategy}", on_click= clicked, args= [impute_strategy, True,"set_params", "impute"])
 
                 if st.session_state.impute["Simple Imputer"]["set_params"]:
 
                     strat = st.selectbox("Impute strategy", ["mean","median","constant"])
-                    affected_columns = st.multiselect("Columns to be imputed", list(st.session_state.data_set["current_state"].columns))
+                    affected_columns = st.multiselect("Columns to be imputed", list(st.session_state.data_set["current_state"].columns), key =1)
                     st.session_state.impute["Simple Imputer"]["strategy"] = strat
                     if strat == "constant":
-                        fill_val = st.text_input("Enter Fill_value")
+                        fill_val = st.number_input("Enter Fill_value")
                         st.session_state.impute["Simple Imputer"]["fill_value"] = fill_val
 
-                    st.button("Impute",on_click=clicked,args=[impute_strategy, True,"impute", "impute"])
+                    st.button("Impute",on_click=clicked,args=[impute_strategy, True,"impute", "impute"],  key = 2)
                     if st.session_state.impute["Simple Imputer"]["impute"]:
                         st.session_state.data_set["current_state"] = impute_columns(affected_columns, st.session_state.data_set["current_state"], "Simple_Imputer", st.session_state.impute["Simple Imputer"])
                     st.write(st.session_state.data_set["current_state"])
@@ -124,10 +124,10 @@ elif page == "Manipulate Data":
                 if st.session_state.impute["KNN Imputer"]["set_params"]:
 
                     n_nearest_neigbours = st.number_input("Enter the N Nearest Neighbours")
-                    affected_columns = st.multiselect("Columns to be imputed", list(st.session_state.data_set["current_state"].columns))
+                    affected_columns = st.multiselect("Columns to be imputed", list(st.session_state.data_set["current_state"].columns), key = 3)
                     st.session_state.impute["KNN Imputer"]["n_nearest_neigbours"] = n_nearest_neigbours
 
-                    st.button("Impute",on_click=clicked,args=[impute_strategy, True,"impute", "impute"])
+                    st.button("Impute",on_click=clicked,args=[impute_strategy, True,"impute", "impute"], key =4)
                     if st.session_state.button["impute_button"]:
                         st.session_state.data_set["current_state"] = impute_columns(affected_columns, st.session_state.data_set["current_state"], "KNN_Imputer", st.session_state.impute["KNN Imputer"])
                     st.write(st.session_state.data_set["current_state"])

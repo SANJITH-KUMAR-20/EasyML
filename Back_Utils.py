@@ -3,7 +3,7 @@ from src.data_cleaning import *
 import pandas as pd
 from typing import List
 
-@st.cache_data
+# @st.cache_data
 def drop_column(column: List[str], data : pd.DataFrame) -> pd.DataFrame:
 
     drop_data = DataDrop(data)
@@ -11,13 +11,12 @@ def drop_column(column: List[str], data : pd.DataFrame) -> pd.DataFrame:
 
     return data
 
-@st.cache_data
-
+# @st.cache_data
 def impute_columns(columns : List[str], data : pd.DataFrame, strategy: str, impute_parameters : dict) -> pd.DataFrame:
 
     impute = Imputer(data)
 
     for column in columns:
-        data = impute.handle_data(column, strategy, impute_parameters["strategy"],impute_parameters["fill_value"],impute_parameters["n_nearest_neigbours"])
+        data = impute.handle_data(column, strategy, impute_parameters["strategy"],impute_parameters["fill_value"])
 
     return data
