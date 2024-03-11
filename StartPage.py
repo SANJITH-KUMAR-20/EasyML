@@ -10,6 +10,7 @@ st.set_page_config(page_title="EasyML", page_icon=":bar_chart:")
 page = st.sidebar.radio("Navigation", ["Home", "Manipulate Data", "Build Model", "Visualize Data", "Chat with PY", "Deploy Model"])
 
 parent_data_set = None
+global g_current_state 
 
 #GLOBAL_SESSION_STATES
 if "button" not in st.session_state:
@@ -73,9 +74,9 @@ elif page == "Manipulate Data":
     # if "data_set" in st.session_state:
     #     st.session_state.data_set["current_state"] = st.session_state.data_set["parent_Data_set"]
     current_state = st.session_state.data_set["current_state"]
-    selected_operation = st.selectbox("Select the operation", ["None", "drop column","impute"])
+    selected_operation = st.selectbox("Select the operation", ["None", "Drop Column","Impute","Standardize","Encode"])
 
-    if selected_operation == "drop column":
+    if selected_operation == "Drop Column":
         if "drop_button" not in st.session_state.button:
             st.session_state.button["drop_button"] = False
         selected_columns = st.multiselect("select columns to drop",list(current_state.columns))
@@ -84,10 +85,11 @@ elif page == "Manipulate Data":
             data_drop_strategy = drop_column(selected_columns, current_state)
             st.session_state.data_set["current_state"] = data_drop_strategy
         current_state = st.session_state.data_set["current_state"]
+        g_current_state = current_state
         st.write(current_state.head())
         st.session_state.button["drop_button"] = False
 
-    elif selected_operation == "impute":
+    if selected_operation == "Impute":
         if "impute_button" not in st.session_state.button:
             st.session_state.button["impute_button"] = False
         # st.session_state.button["impute_button"] = False
@@ -112,6 +114,7 @@ elif page == "Manipulate Data":
                     st.button("Impute",on_click=clicked,args=[impute_strategy, True,"impute", "impute"],  key = 2)
                     if st.session_state.impute["Simple Imputer"]["impute"]:
                         st.session_state.data_set["current_state"] = impute_columns(affected_columns, st.session_state.data_set["current_state"], "Simple_Imputer", st.session_state.impute["Simple Imputer"])
+                    g_current_state = st.session_state.data_set["current_state"]
                     st.write(st.session_state.data_set["current_state"])
 
 
@@ -130,9 +133,28 @@ elif page == "Manipulate Data":
                     st.button("Impute",on_click=clicked,args=[impute_strategy, True,"impute", "impute"], key =4)
                     if st.session_state.button["impute_button"]:
                         st.session_state.data_set["current_state"] = impute_columns(affected_columns, st.session_state.data_set["current_state"], "KNN_Imputer", st.session_state.impute["KNN Imputer"])
+                    g_current_state = st.session_state.data_set["current_state"]
                     st.write(st.session_state.data_set["current_state"])
-                
+    st.write(g_current_state)
+    if selected_operation == "Standardize":
+        if "standardize_button" not in st.session_state.button:
+            st.session_state.button["standardize_button"] = False
+        # st.session_state.button["impute_button"] = False
+        scaling_strategies = st.multiselect("Select the Scaling Strategy", ["MinMax Scaler", "Standard Scaler"])
 
+        for strategy in scaling_strategies:
+
+            if strategy == "MinMax Scaler":
+                data = g_current_state
+                st.write(g_current_state)
+                columns_to_scale = st.multiselect("Select the columns to Scale", data.columns)
+                if "stdscale" not in st.session_state.button:
+                    st.session_state.button["stdscale"] = False
+                st.button("Scale", on_click=clicked, args=["stdscale"])
+                if st.session_state.button["stdscale"] and data and columns_to_scale:
+                    st.session_state.data_set["current_state"] = standardize(list(columns_to_scale),data,strategy)
+                data1 = st.session_state.data_set["current_state"]
+                st.write(data1)
 
 
 
