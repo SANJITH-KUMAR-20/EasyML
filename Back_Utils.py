@@ -37,3 +37,5 @@ def standardize(columns: List[str], data : pd.DataFrame, strategy : str):
     standardize = Scaler(data, strategy)
     for column in columns:
         data = standardize.handle_data(column)
+
+    return data

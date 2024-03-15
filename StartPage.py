@@ -135,7 +135,6 @@ elif page == "Manipulate Data":
                         st.session_state.data_set["current_state"] = impute_columns(affected_columns, st.session_state.data_set["current_state"], "KNN_Imputer", st.session_state.impute["KNN Imputer"])
                     g_current_state = st.session_state.data_set["current_state"]
                     st.write(st.session_state.data_set["current_state"])
-    st.write(g_current_state)
     if selected_operation == "Standardize":
         if "standardize_button" not in st.session_state.button:
             st.session_state.button["standardize_button"] = False
@@ -145,16 +144,24 @@ elif page == "Manipulate Data":
         for strategy in scaling_strategies:
 
             if strategy == "MinMax Scaler":
-                data = g_current_state
-                st.write(g_current_state)
+                data = st.session_state.data_set["current_state"]
+                columns_to_scale = st.multiselect("Select the columns to Scale", data.columns)
+                if "minscale" not in st.session_state.button:
+                    st.session_state.button["stdscale"] = False
+                st.button("Scale", on_click=clicked, args=["minscale"])
+                if st.session_state.button["minscale"]:
+                    st.session_state.data_set["current_state"] = standardize(list(columns_to_scale),data,strategy)
+                    st.write(st.session_state.data_set["current_state"])
+
+            if strategy == "Standard Scaler":
+                data = st.session_state.data_set["current_state"]
                 columns_to_scale = st.multiselect("Select the columns to Scale", data.columns)
                 if "stdscale" not in st.session_state.button:
                     st.session_state.button["stdscale"] = False
                 st.button("Scale", on_click=clicked, args=["stdscale"])
-                if st.session_state.button["stdscale"] and data and columns_to_scale:
+                if st.session_state.button["stdscale"]:
                     st.session_state.data_set["current_state"] = standardize(list(columns_to_scale),data,strategy)
-                data1 = st.session_state.data_set["current_state"]
-                st.write(data1)
+                    st.write(st.session_state.data_set["current_state"])
 
 
 
