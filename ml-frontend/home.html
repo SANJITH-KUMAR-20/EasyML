@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Home</title>
+        <link rel = "stylesheet" href="home.css">
+    </head>
+    <body>
+        <header>
+            <nav>
+                <div id = "title">
+                    <h1>EasyML</h1>
+                </div>
+                <ul>
+                    <li><a href="index.html" data-page="home">Home</a></li>
+                    <li><a href="home.html" data-page="manipulate-data">Manipulate Data</a></li>
+                    <li><a href="#" data-page="build-model">Build Model</a></li>
+                    <li><a href="#" data-page="visualize-data">Visualize Data</a></li>
+                    <li><a href="#" data-page="chat-with-py">Chat with PY</a></li>
+                    <li><a href="#" data-page="deploy-model">Deploy Model</a></li>
+                </ul>
+            </nav>
+        </header>
+        <div class = "maincontainer">
+            <h1>Easy Manipulate</h1>
+            <p>Data manipulation is a fundamental aspect of the data science workflow. It involves transforming, cleaning, and restructuring raw data into a format suitable for analysis and modeling. Effective data manipulation is crucial for extracting meaningful insights and building accurate predictive models.</p>
+        </div>
+        <div class = "container">
+            <div class="content">
+                <button class="option-button" id="drop-column-button">Drop Column</button>
+                <div class="dropdown" id="drop-column-dropdown">
+                    <select id="drop-column-select">
+                        <option value="" disabled selected>Select a column</option>
+                        <!-- Populate options dynamically using JavaScript -->
+                    </select>
+                    <button id="finalize-drop-button">Finalize</button>
+                    <div class="csv-container" id = "drop-csv-res"></div>
+                </div>
+                
+                <button class="option-button" id="impute-column-button">Impute Column</button>
+                <div class="dropdown" id="impute-column-dropdown">
+                    <select id="impute-column-select">
+                        <option value="" disabled selected>Select a column</option>
+                        <!-- Populate options dynamically using JavaScript -->
+                    </select>
+                    <button id="finalize-impute-button">Finalize</button>
+                    <div class ="csv-container" id = "manipulate-csv-res"></div>
+                </div>
+            </div>
+        </div>
+    <script src = "src/manipulation.js"></script>
+    </body>
+</html>

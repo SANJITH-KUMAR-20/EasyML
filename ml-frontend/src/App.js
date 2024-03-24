@@ -2,7 +2,8 @@ document.addEventListener("DOMContentLoaded", function() {
     // Get elements
     var startButton = document.getElementById("start-button");
     var uploadContainer = document.getElementById("upload-container");
-    var startContent = document.getElementById("para1")
+    var startContent = document.getElementById("para1");
+    var introContent = document.getElementsByClassName("header");
     var fileInput = document.getElementById("file-input");
     var uploadButton = document.getElementById("upload-button");
 

@@ -1,19 +1,24 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from typing import List
+from typing import *
 from pydantic import BaseModel
 import os
 import pandas as pd
 import sqlite3
 
-class Response(BaseModel):
-    result: str | None
+
+
+class ManipulateRequest(BaseModel):
+   columns : List[str]
+   strategy : str
+   content : Optional[int]
 
 origins = [
     "http://localhost",
     "http://localhost:8080",
-    "http://localhost:3000"
+    "http://localhost:3000",
+    "null"
 ]
 
 app = FastAPI()
@@ -25,6 +30,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 conn = sqlite3.connect("data.db")
+
+@app.get("/get_csv")
+async def get_csv():
+    try:
+        # Read the manipulated data from the local directory
+        manipulated_data = pd.read_csv("../data/dummy_csv.csv")
+        # Convert the data to JSON format
+        manipulated_data_json = manipulated_data.to_json()
+        return Response(content=manipulated_data_json, media_type="application/json")
+    except Exception as e:
+        return {"error": str(e)}
+   
 
 @app.post("/upload_csv")
 async def get_file(file : UploadFile = File(...), type : str = "csv"):
