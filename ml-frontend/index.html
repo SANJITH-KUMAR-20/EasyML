@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EasyML</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <nav>
+                <ul>
+                    <li><a href="#" data-page="home">Home</a></li>
+                    <li><a href="#" data-page="manipulate-data">Manipulate Data</a></li>
+                    <li><a href="#" data-page="build-model">Build Model</a></li>
+                    <li><a href="#" data-page="visualize-data">Visualize Data</a></li>
+                    <li><a href="#" data-page="chat-with-py">Chat with PY</a></li>
+                    <li><a href="#" data-page="deploy-model">Deploy Model</a></li>
+                </ul>
+            </nav>
+        </header>
+        <main>
+            <div id="home" class="page">
+                <div class="container">
+                    <div class="header">
+                        <h1>Welcome to EasyML!</h1>
+                        <p>An easy-to-use platform for low-code machine learning and data science.</p>
+                    </div>
+                    <div class = "header2">
+                        <p id="para1">Upload a CSV file to start</p>
+
+                    </div>
+                    <div class="content">
+                        <button id="start-button">Let's get started</button>
+                        <div id="upload-container" style="display: none;">
+                            <input type="file" id="file-input" accept=".csv">
+                            <label for="file-input" id="upload-label">Choose a CSV file</label>
+                            <button id="upload-button">Upload</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="manipulate-data" class="page">
+                <p>HI</p>
+            </div>
+            <div id="build-model" class="page">
+                <!-- Build Model page content -->
+            </div>
+            <div id="visualize-data" class="page">
+                <!-- Visualize Data page content -->
+            </div>
+            <div id="chat-with-py" class="page">
+                <!-- Chat with PY page content -->
+            </div>
+            <div id="deploy-model" class="page">
+                <!-- Deploy Model page content -->
+            </div>
+        </main>
+    </div>
+    <script src="src/app.js"></script>
+</body>
+</html>

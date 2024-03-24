@@ -147,7 +147,7 @@ elif page == "Manipulate Data":
                 data = st.session_state.data_set["current_state"]
                 columns_to_scale = st.multiselect("Select the columns to Scale", data.columns)
                 if "minscale" not in st.session_state.button:
-                    st.session_state.button["stdscale"] = False
+                    st.session_state.button["minscale"] = False
                 st.button("Scale", on_click=clicked, args=["minscale"])
                 if st.session_state.button["minscale"]:
                     st.session_state.data_set["current_state"] = standardize(list(columns_to_scale),data,strategy)
