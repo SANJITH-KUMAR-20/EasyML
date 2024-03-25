@@ -121,3 +121,8 @@ margin-bottom: 400px;
 #impute-column-dropdown {
     display : none;
 }
+
+.csv-container {
+    max-height: 400px;
+    overflow: auto;
+}

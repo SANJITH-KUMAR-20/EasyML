@@ -37,7 +37,7 @@ async def get_csv():
         # Read the manipulated data from the local directory
         manipulated_data = pd.read_csv("../data/dummy_csv.csv")
         # Convert the data to JSON format
-        manipulated_data_json = manipulated_data.to_json()
+        manipulated_data_json = manipulated_data.to_csv()
         return Response(content=manipulated_data_json, media_type="application/json")
     except Exception as e:
         return {"error": str(e)}

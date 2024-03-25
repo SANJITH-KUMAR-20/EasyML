@@ -27,22 +27,42 @@ function displayCSV(dropButton){
     fetch("http://localhost:8000/get_csv",
     {
         method : "GET"
-    }).then(response => response.json()).then(
+    }).then(response => response.text()).then(
         data => {
-            console.log(data)
-            const csvData = JSON.parse(data);
-            console.log(csvData)
-            const tableHTML = "<table>" +
-                    csvData.map(row => {
-                        return "<tr>" +
-                            row.map(cell => {
-                                return "<td>" + cell + "</td>";
-                            }).join("") +
-                            "</tr>";
-                    }).join("") +
-                    "</table>";
-            console.log(tableHTML)
-            dropedResultantCSV.innerHTML = tableHTML;
+            
+            const csvData = data;
+            
+            const tableHTML = convertToHTML(csvData);
+            dropButton.innerHTML = tableHTML;
         }
     ).catch(error => console.log(error))
 };
+
+function convertToHTML(csvData){
+    const rows = csvData.split("\r\n");
+    let htmlTable = '<table>'
+    var col = true;
+    rows.forEach(row => {
+        htmlTable += '<tr>';
+        const eles = row.split(",");
+        // if (eles.indexOf("\r") !== -1) {
+        //     eles = eles.replace("", '');
+        // }
+        eles.forEach(cell => {
+            if(cell != ''){
+            htmlTable += '<td>'+cell+'</td>';}
+            else if(cell == '' && col){
+                cell = 'S.no';
+                htmlTable += '<td>'+cell+'</td>';
+            }
+            else{
+                cell = 'null';
+                htmlTable += '<td>'+cell+'</td>';
+            }
+        });
+        col = false;
+        htmlTable += '</tr>';
+    });
+    htmlTable += '</table>';
+    return htmlTable;
+}
