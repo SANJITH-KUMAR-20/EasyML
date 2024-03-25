@@ -34,14 +34,20 @@ conn = sqlite3.connect("data.db")
 @app.get("/get_csv")
 async def get_csv():
     try:
-        # Read the manipulated data from the local directory
         manipulated_data = pd.read_csv("../data/dummy_csv.csv")
-        # Convert the data to JSON format
         manipulated_data_json = manipulated_data.to_csv()
         return Response(content=manipulated_data_json, media_type="application/json")
     except Exception as e:
         return {"error": str(e)}
    
+@app.get("/get_columns")
+async def get_columns():
+   try:
+        data = pd.read_csv("../data/dummy_csv.csv")
+        columns = ",".join(list(data.columns))
+        return Response(content = columns, media_type="application/json")
+   except Exception as e:
+        return {"error":str(2)}
 
 @app.post("/upload_csv")
 async def get_file(file : UploadFile = File(...), type : str = "csv"):
