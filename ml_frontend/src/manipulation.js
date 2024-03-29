@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
         var dropColDropdown = document.getElementById("drop-column-dropdown");
         var imputeDropDown = document.getElementById("impute-column-dropdown");
         var csvContainers = document.getElementsByClassName("csv-container");
+        var dropSelectDropDown = document.getElementById("drop-column-select");
         
         dropButton.addEventListener("click", () => {
             dropColDropdown.style.display = "block";
@@ -17,10 +18,44 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             
         });
+        dropSelectDropDown.addEventListener("click" ,() => {
+            let column = getColumns();
+            var htmllist = "";
+            column.forEach(col => {
+                var option = "<option value = " + col + ">" + col + "</option>";
+                htmllist += option;
+            });
+            dropSelectDropDown.innerHTML = htmllist;
+            dropSelectDropDown.style.display = "block";
+
+        });
         imputeButton.addEventListener("click", () => {
             imputeDropDown.style.display = "block";
         });
 });
+
+// function selectedColumns(column, SelectDropDown, dropDown){
+//     SelectDropDown.innerHTML = "";
+//     column.forEach(col => {
+//         var option = document.createElement("option");
+//         option.text = col;
+//         option.value = col;
+//         SelectDropDown.appendChild(option);
+//     });
+    
+//     console.log(SelectDropDown.innerHTML)
+// }
+function getColumns(){
+    var column = [];
+    fetch("http://localhost:8000/get_columns",
+    {
+        method:"GET"
+    }).then(response => response.text()).then(data =>{
+        let columns = data.split(",");
+        columns.forEach(col => column.push(col));
+    });
+    return column;
+}
 
 function displayCSV(dropButton){
 

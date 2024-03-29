@@ -99,6 +99,7 @@ margin-bottom: 400px;
     padding: 5px;
     margin-bottom: 10px;
     width: 200px;
+    height: auto;
 }
 
 .dropdown button {
