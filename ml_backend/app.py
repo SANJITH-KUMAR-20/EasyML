@@ -35,7 +35,7 @@ conn = sqlite3.connect("data.db")
 @app.get("/get_csv")
 async def get_csv():
     try:
-        manipulated_data = pd.read_csv("../data/dummy_csv.csv")
+        manipulated_data = pd.read_csv("database/dummy_csv.csv")
         manipulated_data_json = manipulated_data.to_csv()
         return Response(content=manipulated_data_json, media_type="application/json")
     except Exception as e:

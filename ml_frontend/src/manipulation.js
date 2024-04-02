@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
         var imputeButton = document.getElementById("impute-column-button");
         var dropColDropdown = document.getElementById("drop-column-dropdown");
         var imputeDropDown = document.getElementById("impute-column-dropdown");
-        var csvContainers = document.getElementsByClassName("csv-container");
+        // var csvContainers = document.getElementsByClassName("csv-container");
         var dropSelectDropDown = document.getElementById("drop-column-select");
         
         dropButton.addEventListener("click", () => {
@@ -20,12 +20,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         dropSelectDropDown.addEventListener("click" ,() => {
             let column = getColumns();
-            var htmllist = "";
             column.forEach(col => {
-                var option = "<option value = " + col + ">" + col + "</option>";
-                htmllist += option;
+                var option = document.createElement("option");
+                option.text = col;
+                option.value = col;
+                dropSelectDropDown.appendChild(option);
             });
-            dropSelectDropDown.innerHTML = htmllist;
             dropSelectDropDown.style.display = "block";
 
         });
