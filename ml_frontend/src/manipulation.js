@@ -7,7 +7,9 @@ document.addEventListener("DOMContentLoaded", () => {
         var dropColDropdown = document.getElementById("drop-column-dropdown");
         var imputeDropDown = document.getElementById("impute-column-dropdown");
         // var csvContainers = document.getElementsByClassName("csv-container");
-        var dropSelectDropDown = document.getElementById("drop-column-select");
+        // var dropSelectDropDown = document.getElementById("drop-column-select");
+        const columnDropDown = document.getElementById("columnDropdown");
+        const multiSelectBox = document.getElementById("multiSelectDropdown");
         
         dropButton.addEventListener("click", () => {
             dropColDropdown.style.display = "block";
@@ -18,15 +20,20 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             
         });
-        dropSelectDropDown.addEventListener("click" ,() => {
+        multiSelectBox.addEventListener("click" ,() => {
             let column = getColumns();
             column.forEach(col => {
-                var option = document.createElement("option");
-                option.text = col;
-                option.value = col;
-                dropSelectDropDown.appendChild(option);
+                const listItem = document.createElement("li");
+                const label = document.createElement("label");
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.value = col;
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(col));
+                listItem.appendChild(label);
+                columnDropDown.appendChild(listItem);
             });
-            dropSelectDropDown.style.display = "block";
+            columnDropDown.style.display = "block";
 
         });
         imputeButton.addEventListener("click", () => {

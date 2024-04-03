@@ -27,14 +27,21 @@
         <div class = "container">
             <div class="content">
                 <button class="option-button" id="drop-column-button">Drop Column</button>
-                <div class="dropdown" id="drop-column-dropdown">
-                    <select id="drop-column-select">
-                        <option value="" disabled selected>Select a column</option>
-                        <!-- Populate options dynamically using JavaScript -->
-                    </select>
+                 <div class="dropdown" id = "drop-column-dropdown"> 
+                    <button class="btn btn-success dropdown-toggle"
+                            type="button"
+                            id="multiSelectDropdown"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"> 
+                        Select 
+                    </button> 
+                    <ul class="dropdown-menu"
+                        id="columnDropdown"
+                        aria-labelledby="multiSelectDropdown"> 
+                        <!-- Populated dynamically using JavaScript -->
+                    </ul> 
                     <button id="finalize-drop-button">Finalize</button>
-                    <div class="csv-container" id = "drop-csv-res"></div>
-                </div>
+                 </div> 
                 
                 <button class="option-button" id="impute-column-button">Impute Column</button>
                 <div class="dropdown" id="impute-column-dropdown">
