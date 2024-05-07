@@ -1,7 +1,7 @@
 
 import streamlit as st
 import pandas as pd
-from Back_Utils import *
+from ml_backend.Back_Utils import *
 
 # Page configurations
 st.set_page_config(page_title="EasyML", page_icon=":bar_chart:")
