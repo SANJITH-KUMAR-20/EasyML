@@ -2,14 +2,15 @@
 
 
 document.addEventListener("DOMContentLoaded", () => {
-        var dropButton = document.getElementById("drop-column-button");
-        var imputeButton = document.getElementById("impute-column-button");
-        var dropColDropdown = document.getElementById("drop-column-dropdown");
-        var imputeDropDown = document.getElementById("impute-column-dropdown");
+    var dropButton = document.getElementById("drop-column-button");
+    var imputeButton = document.getElementById("impute-column-button");
+    var dropColDropdown = document.getElementById("drop-column-dropdown");
+    var imputeDropDown = document.getElementById("impute-column-dropdown");
+    const multiSelectDropdown = document.getElementById("multiSelectDropdown");
         // var csvContainers = document.getElementsByClassName("csv-container");
         // var dropSelectDropDown = document.getElementById("drop-column-select");
         const columnDropDown = document.getElementById("columnDropdown");
-        const multiSelectBox = document.getElementById("multiSelectDropdown");
+        // const multiSelectBox = document.getElementById("multiSelectDropdown");
         
         dropButton.addEventListener("click", () => {
             dropColDropdown.style.display = "block";
@@ -17,12 +18,14 @@ document.addEventListener("DOMContentLoaded", () => {
             finalizeDrop.addEventListener("click", () => {
                 var dropedResultantCSV = document.getElementById("drop-csv-res");
                 displayCSV(dropedResultantCSV);
-            })
-            
+            });
         });
-        multiSelectBox.addEventListener("click" ,() => {
-            let column = getColumns();
-            column.forEach(col => {
+        multiSelectDropdown.addEventListener("click", () => { // Updated
+            var columns = getColumns();
+            console.log(columns);
+            
+            columns.forEach((col) => {
+                console.log(col);
                 const listItem = document.createElement("li");
                 const label = document.createElement("label");
                 const checkbox = document.createElement("input");
@@ -34,8 +37,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 columnDropDown.appendChild(listItem);
             });
             columnDropDown.style.display = "block";
-
         });
+        
         imputeButton.addEventListener("click", () => {
             imputeDropDown.style.display = "block";
         });
@@ -52,12 +55,11 @@ document.addEventListener("DOMContentLoaded", () => {
     
 //     console.log(SelectDropDown.innerHTML)
 // }
-function getColumns(){
+function getColumns() {
     var column = [];
-    fetch("http://localhost:8000/get_columns",
-    {
-        method:"GET"
-    }).then(response => response.text()).then(data =>{
+    fetch("http://localhost:8000/get_columns", {
+        method: "GET"
+    }).then(response => response.text()).then(data => {
         let columns = data.split(",");
         columns.forEach(col => column.push(col));
     });
