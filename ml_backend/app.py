@@ -4,11 +4,14 @@ from fastapi.responses import JSONResponse
 from typing import *
 from pydantic import BaseModel
 import os
+from src.tests.testroutes import *
+from src.config.dataset_man_config import *
+from src import DataObject
 import pandas as pd
 import sqlite3
 from Back_Utils import *
 
-
+dataset = {}
 
 class ManipulateRequest(BaseModel):
    columns : List[str]
@@ -51,24 +54,30 @@ async def get_columns():
         return {"error":str(e)}
    
 @app.post("/drop_columns")
-async def drop_columns():
-    try:
-        data = drop_column()
-    except:
-        pass
+async def drop_columns(config : DataConfig ):
+        if config.dataset_name not in dataset:
+            return {"message" : "No such dataset"}
+        data = drop_column(config.columns, dataset[config.dataset_name].get_state())
+        dataset[config.dataset_name].change_state(data)
+        drop_colum(dataset)
+        return dataset[config.dataset_name].get_state().head()
+
 
 @app.post("/upload_csv")
-async def get_file(file : UploadFile = File(...), type : str = "csv"):
+async def get_file(file : UploadFile = File(...),name : str = "dummy", type : str = "csv"):
    try: 
     dir = "../database"
     if not os.path.exists(dir):
         os.mkdir(dir)
     if type == "csv":
-        file_path = f"{dir}/dummy_csv.csv"
+        file_path = f"{dir}/{name}.csv"
         with open(file_path, "wb") as f:
             content = await file.read()
             f.write(content)
         data = pd.read_csv(file_path)
+        if name in dataset:
+            return {"message" : "DataSet already exists"}
+        dataset[name] = DataObject.DataObj(data, name)
         data.to_sql('csv_data', conn, if_exists='replace', index=False)
     return {"message" : "success!"}
    except Exception as e:

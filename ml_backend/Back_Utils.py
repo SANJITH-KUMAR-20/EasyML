@@ -4,7 +4,7 @@ from src.data_scaling import *
 import pandas as pd
 from typing import List
 
-@st.cache_data
+
 def drop_column(column: List[str], data : pd.DataFrame) -> pd.DataFrame:
 
     drop_data = DataDrop(data)
@@ -12,7 +12,6 @@ def drop_column(column: List[str], data : pd.DataFrame) -> pd.DataFrame:
 
     return data
 
-@st.cache_data
 def impute_columns(columns : List[str], data : pd.DataFrame, strategy: str, impute_parameters : dict) -> pd.DataFrame:
 
     impute = Imputer(data)
@@ -23,7 +22,6 @@ def impute_columns(columns : List[str], data : pd.DataFrame, strategy: str, impu
     return data
 
 
-@st.cache_data
 def encode(columns :List[str], data : pd.DataFrame, strategy : str):
     encode = Encoding(data, strategy)
     for column in columns:
@@ -31,7 +29,7 @@ def encode(columns :List[str], data : pd.DataFrame, strategy : str):
 
     return data
 
-@st.cache_data
+
 def standardize(columns: List[str], data : pd.DataFrame, strategy : str):
 
     standardize = Scaler(data, strategy)
