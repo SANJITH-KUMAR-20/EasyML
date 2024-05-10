@@ -1,8 +1,8 @@
 from typing import *
-
+import pandas as pd
 class DataObj:
 
-    def __init__(self, data, name):
+    def __init__(self, data, name) -> None:
 
         """
         class is used to version a csv data in the form of a pandas dataframe
@@ -18,7 +18,7 @@ class DataObj:
         self.prev_states = [] #stores the previous states of the data (versioning part)
         self.name = name
 
-    def change_state(self, new_state):
+    def change_state(self, new_state) -> None:
 
         """
         used to change the current state of the data object
@@ -30,7 +30,7 @@ class DataObj:
         self.prev_states.append(self.curr_state)
         self.curr_state = new_state
 
-    def get_state(self):
+    def get_state(self) -> pd.DataFrame:
         """
         Returns the current state of the data
 
@@ -39,13 +39,13 @@ class DataObj:
         """
         return self.curr_state
     
-    def return_prev_state(self):
+    def return_prev_state(self) -> None:
         """
         changes the current state to the previous state
         """
         self.curr_state = self.prev_states.pop()
 
-    def get_name(self):
+    def get_name(self) -> str:
         """
         Returns the name of the dataset
 
