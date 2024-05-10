@@ -1,6 +1,6 @@
 import requests
 
-
+dataset = None
 def upload_csv() -> None:
 
     """
@@ -19,7 +19,7 @@ def upload_csv() -> None:
         print("Upload failed with status code:", response.status_code)
 
 
-def drop_colum(dataset) -> None:
+def drop_colum() -> None:
 
     """
     Unit test for drop column
@@ -43,4 +43,4 @@ def drop_colum(dataset) -> None:
     else:
         print("Upload failed with status code:", response.status_code)
 
-# drop_colum()
+drop_colum()

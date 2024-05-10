@@ -60,8 +60,6 @@ async def drop_columns(config : DataConfig ):
         data = drop_column(config.columns, dataset[config.dataset_name].get_state())
         dataset[config.dataset_name].change_state(data)
         drop_colum(dataset)
-        return dataset[config.dataset_name].get_state().head()
-
 
 @app.post("/upload_csv")
 async def get_file(file : UploadFile = File(...),name : str = "dummy", type : str = "csv"):
