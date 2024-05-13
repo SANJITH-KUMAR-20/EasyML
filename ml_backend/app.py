@@ -33,7 +33,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-conn = sqlite3.connect("data.db")
 
 @app.get("/get_csv")
 async def get_csv():
@@ -55,11 +54,15 @@ async def get_columns():
    
 @app.post("/drop_columns")
 async def drop_columns(config : DataConfig ):
-        if config.dataset_name not in dataset:
-            return {"message" : "No such dataset"}
-        data = drop_column(config.columns, dataset[config.dataset_name].get_state())
-        dataset[config.dataset_name].change_state(data)
-        drop_colum(dataset)
+        try:
+            if config.dataset_name not in dataset:
+                return {"message" : "No such dataset"}
+            data = drop_column(config.columns, dataset[config.dataset_name].get_state())
+            dataset[config.dataset_name].change_state(data)
+        except Exception as e:
+            raise e
+
+
 
 @app.post("/upload_csv")
 async def get_file(file : UploadFile = File(...),name : str = "dummy", type : str = "csv"):
@@ -76,7 +79,6 @@ async def get_file(file : UploadFile = File(...),name : str = "dummy", type : st
         if name in dataset:
             return {"message" : "DataSet already exists"}
         dataset[name] = DataObject.DataObj(data, name)
-        data.to_sql('csv_data', conn, if_exists='replace', index=False)
     return {"message" : "success!"}
    except Exception as e:
       raise e
