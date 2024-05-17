@@ -42,5 +42,4 @@ def drop_colum() -> None:
         print("Sucess")
     else:
         print("Upload failed with status code:", response.status_code)
-
-drop_colum()
+        

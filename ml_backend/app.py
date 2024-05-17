@@ -62,8 +62,6 @@ async def drop_columns(config : DataConfig ):
         except Exception as e:
             raise e
 
-
-
 @app.post("/upload_csv")
 async def get_file(file : UploadFile = File(...),name : str = "dummy", type : str = "csv"):
    try: 
