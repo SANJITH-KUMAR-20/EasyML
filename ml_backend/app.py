@@ -74,9 +74,7 @@ async def get_file(file : UploadFile = File(...),name : str = "dummy", type : st
             content = await file.read()
             f.write(content)
         data = pd.read_csv(file_path)
-        if name in dataset:
-            return {"message" : "DataSet already exists"}
-        dataset[name] = DataObject.DataObj(data, name)
+        
     return {"message" : "success!"}
    except Exception as e:
       raise e
