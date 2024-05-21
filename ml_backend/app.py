@@ -8,10 +8,15 @@ from src.tests.testroutes import *
 from src.config.dataset_man_config import *
 from src import DataObject
 import pandas as pd
-import sqlite3
 from Back_Utils import *
+from fastapi import HTTPException
+from fastapi.responses import StreamingResponse
+from io import StringIO
+import mysql.connector
+from urllib.parse import quote_plus
+from sqlalchemy import create_engine
 
-dataset = {}
+
 
 class ManipulateRequest(BaseModel):
    columns : List[str]
@@ -34,48 +39,85 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/get_csv")
-async def get_csv():
-    try:
-        manipulated_data = pd.read_csv("database/dummy_csv.csv")
-        manipulated_data_json = manipulated_data.to_csv()
-        return Response(content=manipulated_data_json, media_type="application/json")
-    except Exception as e:
-        return {"error": str(e)}
-   
-@app.get("/get_columns")
-async def get_columns():
-   try:
-        data = pd.read_csv("database/dummy_csv.csv")
-        columns = ",".join(list(data.columns))
-        return Response(content = columns, media_type="application/json")
-   except Exception as e:
-        return {"error":str(e)}
-   
-@app.post("/drop_columns")
-async def drop_columns(config : DataConfig ):
-        try:
-            if config.dataset_name not in dataset:
-                return {"message" : "No such dataset"}
-            data = drop_column(config.columns, dataset[config.dataset_name].get_state())
-            dataset[config.dataset_name].change_state(data)
-        except Exception as e:
-            raise e
+host = "localhost"
+user = "root"
+password = "$@njith2003"
+database = 'mynewdatabase'
+password = quote_plus(password)
+
+db_config = {
+    'user': 'root',
+    'password': '$@njith2003',
+    'host': 'localhost',
+    'database': 'mynewdatabase'
+}
+
+# MySQL database connection URL
+DATABASE_URL = f"mysql+pymysql://{user}:{password}@{host}/{database}"
+
+# Create the SQLAlchemy engine
+engine = create_engine(DATABASE_URL)
 
 @app.post("/upload_csv")
-async def get_file(file : UploadFile = File(...),name : str = "dummy", type : str = "csv"):
-   try: 
-    dir = "../database"
-    if not os.path.exists(dir):
-        os.mkdir(dir)
-    if type == "csv":
-        file_path = f"{dir}/{name}.csv"
-        with open(file_path, "wb") as f:
-            content = await file.read()
-            f.write(content)
-        data = pd.read_csv(file_path)
+async def upload_csv(file: UploadFile = File(...), name: str = "dummy", type: str = "csv"):
+    try:
+        dir = "../database"
+        if not os.path.exists(dir):
+            os.mkdir(dir)
         
-    return {"message" : "success!"}
-   except Exception as e:
-      raise e
+        if type == "csv":
+            file_path = f"{dir}/{name}.csv"
+            with open(file_path, "wb") as f:
+                content = await file.read()
+                f.write(content)
+            
+            # Read the CSV file into a DataFrame
+            data = pd.read_csv(file_path)
+            
+            # Write the DataFrame to a MySQL table
+            data.to_sql(name, con=engine, if_exists='replace', index=False)
+            
+            return {"message": "success!"}
+    except Exception as e:
+        return {"message": f"An error occurred: {str(e)}"}
+    
+@app.get("/download-table/{table_name}")
+async def download_table_as_csv(table_name: str):
+    try:
 
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+        
+        cursor.execute(f"SELECT * FROM {table_name}")
+        rows = cursor.fetchall()
+        column_names = [i[0] for i in cursor.description]
+
+        cursor.close()
+        connection.close()
+        df = pd.DataFrame(rows, columns=column_names)
+        df = df.to_csv()
+
+        return Response(content=df, media_type="application/json")
+
+    except mysql.connector.Error as err:
+        raise HTTPException(status_code=500, detail=f"Database error: {err}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/delete-data/{table_name}")
+async def delete_table(table_name:str):
+
+    try:
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+        cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+        return {"data deleted successfully"}
+    
+    except mysql.connector.Error as err:
+        raise HTTPException(status_code=500, detail=f"Database error: {err}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
