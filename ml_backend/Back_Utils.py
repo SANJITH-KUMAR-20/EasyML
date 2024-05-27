@@ -2,6 +2,7 @@ import streamlit as st
 from src.data_cleaning import *
 from src.data_scaling import *
 import pandas as pd
+from src.config.dataset_man_config import *
 from typing import List
 
 
@@ -12,12 +13,11 @@ def drop_column(column: List[str], data : pd.DataFrame) -> pd.DataFrame:
 
     return data
 
-def impute_columns(columns : List[str], data : pd.DataFrame, strategy: str, impute_parameters : dict) -> pd.DataFrame:
+def impute_columns(parameter : ImputeRequest, data : pd.DataFrame) -> pd.DataFrame:
 
     impute = Imputer(data)
-
-    for column in columns:
-        data = impute.handle_data(column, strategy, impute_parameters["strategy"],impute_parameters["fill_value"])
+    print(parameter.parameters["strategy"])
+    data = impute.handle_data(parameter=parameter)
 
     return data
 
