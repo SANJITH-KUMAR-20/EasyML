@@ -16,7 +16,6 @@ def drop_column(column: List[str], data : pd.DataFrame) -> pd.DataFrame:
 def impute_columns(parameter : ImputeRequest, data : pd.DataFrame) -> pd.DataFrame:
 
     impute = Imputer(data)
-    print(parameter.parameters["strategy"])
     data = impute.handle_data(parameter=parameter)
 
     return data
@@ -30,10 +29,9 @@ def encode(columns :List[str], data : pd.DataFrame, strategy : str):
     return data
 
 
-def standardize(columns: List[str], data : pd.DataFrame, strategy : str):
+def standardize(parameter : StandardizeRequest, data : pd.DataFrame):
 
-    standardize = Scaler(data, strategy)
-    for column in columns:
-        data = standardize.handle_data(column)
+    standardize = Scaler(data, parameter.strategy)
+    data = standardize.handle_data(parameter.columns, parameter)
 
     return data

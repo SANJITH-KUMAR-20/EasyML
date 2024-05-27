@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 import typing
 import logging
 import numpy as np
+from typing import *
 import pandas as pd
 from sklearn.base import *
 
@@ -28,27 +29,29 @@ class Scaler(DataStrategy):
         self.data = data
         self.strategy = strategy
 
-    def _standard_scaler(self, columns : str) -> pd.DataFrame:
+    def _standard_scaler(self, columns : List[str],parameter) -> pd.DataFrame:
         scaler = StandardScaler()
         try:
-            self.data[[columns]] = scaler.fit_transform(self.data[[columns]])
+            self.data[columns] = scaler.fit_transform(self.data[columns])
             return self.data
         except Exception as e:
             raise e
         
-    def _minmax_scaler(self, columns : str) -> pd.DataFrame:
+    def _minmax_scaler(self, columns : List[str], parameter) -> pd.DataFrame:
         scaler = MinMaxScaler()
+        if parameter.parameters["feature_range"]:
+            scaler = MinMaxScaler(parameter.parameters["feature_range"])
         try:
-            self.data[[columns]] = scaler.fit_transform(self.data[[columns]])
+            self.data[columns] = scaler.fit_transform(self.data[columns])
             return self.data
         except Exception as e:
             raise e
         
-    def handle_data(self, column : str) -> pd.DataFrame | pd.Series:
+    def handle_data(self, column : List[str], parameter) -> pd.DataFrame | pd.Series:
         if self.strategy == "MinMax Scaler":
-            return self._minmax_scaler(column)
+            return self._minmax_scaler(column, parameter)
         elif self.strategy == "Standard Scaler":
-            return self._standard_scaler(column)
+            return self._standard_scaler(column,parameter)
         else:
             logging.error("No such strategy")
 
