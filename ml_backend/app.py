@@ -178,11 +178,11 @@ def standardize_data(config :StandardizeRequest) -> None:
         cursor.close()
         connection.close()
         df = pd.DataFrame(rows, columns=column_names)
-
+        print(df)
         data = standardize(config,df)
         data.to_sql(config.table_name, con=engine, if_exists='replace', index=False)
 
-        return {"imputation successful"}
+        return {"scaling successful successful"}
     except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Database error: {err}")
     except Exception as e:

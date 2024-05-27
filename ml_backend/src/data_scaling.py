@@ -39,7 +39,7 @@ class Scaler(DataStrategy):
         
     def _minmax_scaler(self, columns : List[str], parameter) -> pd.DataFrame:
         scaler = MinMaxScaler()
-        if parameter.parameters["feature_range"]:
+        if parameter.parameters and parameter.parameters["feature_range"]:
             scaler = MinMaxScaler(parameter.parameters["feature_range"])
         try:
             self.data[columns] = scaler.fit_transform(self.data[columns])
