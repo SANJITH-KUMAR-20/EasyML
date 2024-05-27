@@ -52,10 +52,8 @@ db_config = {
     'database': 'mynewdatabase'
 }
 
-# MySQL database connection URL
 DATABASE_URL = f"mysql+pymysql://{user}:{password}@{host}/{database}"
 
-# Create the SQLAlchemy engine
 engine = create_engine(DATABASE_URL)
 
 @app.post("/upload_csv")
@@ -71,10 +69,8 @@ async def upload_csv(file: UploadFile = File(...), name: str = "dummy", type: st
                 content = await file.read()
                 f.write(content)
             
-            # Read the CSV file into a DataFrame
             data = pd.read_csv(file_path)
             
-            # Write the DataFrame to a MySQL table
             data.to_sql(name, con=engine, if_exists='replace', index=False)
             
             return {"message": "success!"}
@@ -104,7 +100,7 @@ async def download_table_as_csv(table_name: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/delete-data/{table_name}")
+@app.delete("/delete-data/{table_name}")
 async def delete_table(table_name:str):
 
     try:
@@ -121,3 +117,25 @@ async def delete_table(table_name:str):
         raise HTTPException(status_code=500, detail=f"Database error: {err}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.delete("/drop-column")
+def drop_column(para : DropColumnsRequest):
+
+    try:
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+
+        drop_cols = ", ".join(f"DROP COLUMN {col}" for col in para.columns)
+        query = f"ALTER TABLE {para.table_name} {drop_cols}"
+
+        cursor.execute(query)
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+        return {"column dropped successfully"}
+    
+    except mysql.connector.Error as err:
+        raise HTTPException(status_code=500, detail=f"Database error: {err}")
+    except Exception as e:
+        raise HTTPException(status_code=500,detail=str(e))
