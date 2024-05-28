@@ -52,14 +52,35 @@ class StandardizeRequest(BaseModel):
     strategy : str = Field("MinMaxScalar", description= "Standardization strategy (e.g., 'MinMax Scalar', 'Standard Scalar')")
     columns: List[str] = Field(..., description="List of columns to impute")
     table_name: str = Field(..., description="Name of the table")
-    parameters: Dict[str, Union[int, str, float]] = Field(default_factory=dict, description="Parameters for the imputation strategy")
+    parameters: Dict[str, Union[int, str, float]] = Field(default_factory=dict, description="Parameters for the standarization strategy")
 
     class Config:
         json_schema_extra = {
             "example" : {
-                "strategy": "Simple_Imputer",
+                "strategy": "MinMax Scaler",
                 "columns": ["column1", "column2"],
                 "table_name": "your_table",
                 "parameters": {"feature_range": (5,5)}
+            }
+        }
+
+class EncodeRequest(BaseModel):
+
+    """
+    Config for encoding
+    """
+
+    strategy : str = Field("OneHotEncoder", description= "Encoding strategy (e.g., 'OrdinalEncoder', 'OneHotEncoder', 'LabelEncoder')")
+    columns: List[str] = Field(..., description="List of columns to encode")
+    table_name: str = Field(..., description="Name of the table")
+    parameters: Dict[str, Union[int, str, float]] = Field(default_factory=dict, description="Parameters for the encoding strategy")
+
+    class Config:
+        json_schema_extra = {
+            "example" : {
+                "strategy": "OneHotEncoder",
+                "columns": ["column1", "column2"],
+                "table_name": "your_table",
+                "parameters": {}
             }
         }

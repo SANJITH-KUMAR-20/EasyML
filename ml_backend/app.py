@@ -189,4 +189,27 @@ def standardize_data(config :StandardizeRequest) -> None:
         print(e)
         raise HTTPException(status_code=500,detail=str(e))
     
+@app.post("/encode-data")
+def encode_data(config :StandardizeRequest) -> None:
+    try:
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+        
+        cursor.execute(f"SELECT * FROM {config.table_name}")
+        rows = cursor.fetchall()
+        column_names = [i[0] for i in cursor.description]
+
+        cursor.close()
+        connection.close()
+        df = pd.DataFrame(rows, columns=column_names)
+        print(df)
+        data = encode(config,df)
+        data.to_sql(config.table_name, con=engine, if_exists='replace', index=False)
+
+        return {"scaling successful successful"}
+    except mysql.connector.Error as err:
+        raise HTTPException(status_code=500, detail=f"Database error: {err}")
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500,detail=str(e))
 

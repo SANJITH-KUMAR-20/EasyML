@@ -21,11 +21,9 @@ def impute_columns(parameter : ImputeRequest, data : pd.DataFrame) -> pd.DataFra
     return data
 
 
-def encode(columns :List[str], data : pd.DataFrame, strategy : str):
-    encode = Encoding(data, strategy)
-    for column in columns:
-        data = encode.handle_data(column)
-
+def encode(parameter : EncodeRequest, data : pd.DataFrame):
+    encode = Encoding(data, parameter.strategy)
+    data = encode.handle_data(parameter)
     return data
 
 
