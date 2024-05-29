@@ -206,7 +206,7 @@ def encode_data(config :StandardizeRequest) -> None:
         data = encode(config,df)
         data.to_sql(config.table_name, con=engine, if_exists='replace', index=False)
 
-        return {"scaling successful successful"}
+        return {"encoding successful"}
     except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Database error: {err}")
     except Exception as e:

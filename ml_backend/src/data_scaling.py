@@ -81,10 +81,11 @@ class Encoding(DataStrategy):
         except Exception as e:
             raise e
 
-    def _label_encoding(self, column : List[str]) -> pd.DataFrame:
+    def _label_encoding(self, columns : List[str]) -> pd.DataFrame:
         encoding = LabelEncoder()
         try:
-            self.data[column] = encoding.fit_transform(self.data[column])
+            for column in columns:
+                self.data[column] = encoding.fit_transform(self.data[column])
             return self.data
         except Exception as e:
             raise e  
