@@ -64,9 +64,10 @@ class Encoding(DataStrategy):
         self.strategy = strategy
         
     def _onehot_encoding(self, column : List[str]) -> pd.DataFrame:
-        encoding = OneHotEncoder()
+        encoding = OneHotEncoder(categories='auto')
         try:
             data = encoding.fit_transform(self.data[column])
+            data = pd.DataFrame(data.toarray(), columns=encoding.get_feature_names_out(column))
             self.data.drop(column, axis=1)
             self.data = pd.concat([self.data,data], axis= 1)
             return self.data
