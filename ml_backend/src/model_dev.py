@@ -6,6 +6,15 @@ from sklearn.linear_model import LinearRegression
 import numpy as np
 from typing import *
 from sklearn.model_selection import train_test_split
+import logging
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.svm import SVC
+from sklearn.cluster import KMeans, DBSCAN, AgglomerativeClustering
 
 class Model(ABC):
 
@@ -89,4 +98,137 @@ class LinearReg(Model):
 
         except Exception as e:
             logging.error("Error in training model: {e}")
+            raise e
+        
+
+class RidgeReg(Model):
+    def train(self, X_train, y_train, **kwargs):
+        try:
+            reg = Ridge(**kwargs)
+            reg.fit(X_train, y_train)
+            logging.info("Model trained!")
+            return reg
+        except Exception as e:
+            logging.error(f"Error in training model: {e}")
+            raise e
+
+class LassoReg(Model):
+    def train(self, X_train, y_train, **kwargs):
+        try:
+            reg = Lasso(**kwargs)
+            reg.fit(X_train, y_train)
+            logging.info("Model trained!")
+            return reg
+        except Exception as e:
+            logging.error(f"Error in training model: {e}")
+            raise e
+
+class DecisionTreeReg(Model):
+    def train(self, X_train, y_train, **kwargs):
+        try:
+            reg = DecisionTreeRegressor(**kwargs)
+            reg.fit(X_train, y_train)
+            logging.info("Model trained!")
+            return reg
+        except Exception as e:
+            logging.error(f"Error in training model: {e}")
+            raise e
+
+class RandomForestReg(Model):
+    def train(self, X_train, y_train, **kwargs):
+        try:
+            reg = RandomForestRegressor(**kwargs)
+            reg.fit(X_train, y_train)
+            logging.info("Model trained!")
+            return reg
+        except Exception as e:
+            logging.error(f"Error in training model: {e}")
+            raise e
+        
+class LogisticReg(Model):
+    def train(self, X_train, y_train, **kwargs):
+        try:
+            clf = LogisticRegression(**kwargs)
+            clf.fit(X_train, y_train)
+            logging.info("Model trained!")
+            return clf
+        except Exception as e:
+            logging.error(f"Error in training model: {e}")
+            raise e
+
+class DecisionTreeCls(Model):
+    def train(self, X_train, y_train, **kwargs):
+        try:
+            clf = DecisionTreeClassifier(**kwargs)
+            clf.fit(X_train, y_train)
+            logging.info("Model trained!")
+            return clf
+        except Exception as e:
+            logging.error(f"Error in training model: {e}")
+            raise e
+
+class RandomForestCls(Model):
+    def train(self, X_train, y_train, **kwargs):
+        try:
+            clf = RandomForestClassifier(**kwargs)
+            clf.fit(X_train, y_train)
+            logging.info("Model trained!")
+            return clf
+        except Exception as e:
+            logging.error(f"Error in training model: {e}")
+            raise e
+
+class GradientBoostingCls(Model):
+    def train(self, X_train, y_train, **kwargs):
+        try:
+            clf = GradientBoostingClassifier(**kwargs)
+            clf.fit(X_train, y_train)
+            logging.info("Model trained!")
+            return clf
+        except Exception as e:
+            logging.error(f"Error in training model: {e}")
+            raise e
+
+class SVCCls(Model):
+    def train(self, X_train, y_train, **kwargs):
+        try:
+            clf = SVC(**kwargs)
+            clf.fit(X_train, y_train)
+            logging.info("Model trained!")
+            return clf
+        except Exception as e:
+            logging.error(f"Error in training model: {e}")
+            raise e
+        
+class KMeansClus(Model):
+    def train(self, X_train, **kwargs):
+        try:
+            clus = KMeans(**kwargs)
+            clus.fit(X_train)
+            logging.info("Model trained!")
+            return clus
+        except Exception as e:
+            logging.error(f"Error in training model: {e}")
+            raise e
+
+class DBSCANClus(Model):
+    def train(self, X_train, **kwargs):
+        try:
+            clus = DBSCAN(**kwargs)
+            clus.fit(X_train)
+            logging.info("Model trained!")
+            return clus
+        except Exception as e:
+            logging.error(f"Error in training model: {e}")
+            raise e
+
+class AgglomerativeClus(Model):
+    def train(self, X_train, **kwargs):
+        try:
+            clus = AgglomerativeClustering(**kwargs)
+            clus.fit(X_train)
+            logging.info("Model trained!")
+            return clus
+        except Exception as e:
+            logging.error(f"Error in training model: {e}")
             raise e
