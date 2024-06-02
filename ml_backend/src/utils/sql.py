@@ -1,6 +1,7 @@
 import mysql
 import mysql.connector
-
+import pandas as pd
+from typing import *
 from mysql.connector import errorcode
 
 def setup_connector(host = "localhost",user = "root",password = "$@njith2003",database = 'mynewdatabase'):
@@ -30,4 +31,16 @@ def databasesetup(database_name : str):
         else:
             print(err)
         
+
+def save_splits(engine, dataset_name, splits : Tuple[pd.DataFrame]) -> Tuple[str]:
+
+    try:
+        train_x = splits[0]
+        train_y = splits[1]
+        names = (dataset_name + "_train_x", dataset_name + "_train_y")
+        train_x.to_sql(names[0],engine,if_exists="replace",index=False)
+        train_y.to_sql(names[1],engine,if_exists="replace",index=False)
+        return names
+    except Exception as e:
+        raise e
 

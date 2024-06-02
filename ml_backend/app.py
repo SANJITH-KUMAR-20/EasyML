@@ -15,7 +15,8 @@ from io import StringIO
 import mysql.connector
 from urllib.parse import quote_plus
 from sqlalchemy import create_engine
-
+from src.utils.sql import save_splits
+import yaml
 
 
 class ManipulateRequest(BaseModel):
@@ -72,6 +73,7 @@ async def upload_csv(file: UploadFile = File(...), name: str = "dummy", type: st
             data = pd.read_csv(file_path)
             
             data.to_sql(name, con=engine, if_exists='replace', index=False)
+            os.mkdir("../temp")
             
             return {"message": "success!"}
     except Exception as e:
@@ -213,3 +215,31 @@ def encode_data(config :StandardizeRequest) -> None:
         print(e)
         raise HTTPException(status_code=500,detail=str(e))
 
+
+@app.post("/split-data")
+def split_data(config : SplittingRequest):
+    try:
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+        
+        cursor.execute(f"SELECT * FROM {config.dataset_name}")
+        rows = cursor.fetchall()
+        column_names = [i[0] for i in cursor.description]
+
+        cursor.close()
+        connection.close()
+        df = pd.DataFrame(rows, columns=column_names)
+        x_train,y_train = split(config,df)
+        names = save_splits(engine,config.dataset_name,(x_train,y_train))
+        config = {
+        "names" : names
+        }
+        with open('session_config.yaml', 'w') as file:
+            yaml.dump(config, file)
+        return {"successful split"}
+    except mysql.connector.Error as err:
+        raise HTTPException(status_code=500, detail=f"Database error: {err}")
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500,detail=str(e))    
+    

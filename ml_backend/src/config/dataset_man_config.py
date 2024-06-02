@@ -84,3 +84,49 @@ class EncodeRequest(BaseModel):
                 "parameters": {}
             }
         }
+
+class TrainRequest(BaseModel):
+
+    """
+    Config for Training a model.
+    """
+
+    type : str = Field("Regression", description="Type of problem i.e. Classification , Regression...")
+    strategy : str = Field("LinearRegression", description= "Type of model to train i.e. Linear Regressor,Logistic Regressor")
+    dataset_name : str = Field(..., description="Name of the table or dataset")
+    parameters : Dict[str, Union[int,str,float]] = Field(default_factory=dict, description="parameter for training the model.")
+
+    class Config:
+        json_schema_extra = {
+            "example" : {
+                "type" : "Regression",
+                "strategy" : "Linear Regression",
+                "dataset_name" : "your_dataset_name",
+                "parameters" : {}
+            }
+        }
+ 
+
+class SplittingRequest(BaseModel):
+
+    """
+    Config for splitting data
+    """
+    train_test_split : float = Field(...,description="train test split percentage")
+    dataset_name : str = Field(..., description="Name of the table or dataset to split")
+    strategy : str = Field(..., description= "strategy to split")
+    parameters : Dict[str, Union[int,str,float]] = Field(default_factory=dict, description="parameter for splitting data.")
+    y_column : str = Field(..., description= "Column to Predict")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "train_test_split" : "0.8",
+                "dataset_name" : "your_table_name",
+                "strategy" : "TrainTestSplit",
+                "parameters" : {
+                    "shuffle" : True
+                },
+                "y_column" : "column_to_predict"
+            }
+        }
