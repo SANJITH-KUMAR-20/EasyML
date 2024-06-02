@@ -232,9 +232,10 @@ def split_data(config : SplittingRequest):
         x_train,y_train = split(config,df)
         names = save_splits(engine,config.dataset_name,(x_train,y_train))
         config = {
-        "names" : names
+        "train" : names[0],
+        "test" : names[1]
         }
-        with open('session_config.yaml', 'w') as file:
+        with open('../temp/session_config.yaml', 'w') as file:
             yaml.dump(config, file)
         return {"successful split"}
     except mysql.connector.Error as err:

@@ -232,3 +232,4 @@ class AgglomerativeClus(Model):
         except Exception as e:
             logging.error(f"Error in training model: {e}")
             raise e
+        
