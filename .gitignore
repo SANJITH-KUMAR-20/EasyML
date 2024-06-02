@@ -2,4 +2,7 @@ newenv/
 Data/
 .zen/
 /newenv
-ml_backend/src/test.ipynb
+./ml_backend/src/test.ipynb
+/temp
+./temp
+temp
