@@ -24,26 +24,8 @@ import io
 import uuid
 
 
-class ManipulateRequest(BaseModel):
-   columns : List[str]
-   strategy : str
-   content : Optional[int]
-
-origins = [
-    "http://localhost",
-    "http://localhost:8080",
-    "http://localhost:3000",
-    "null"
-]
-
 app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
 
 host = "localhost"
 user = "root"
