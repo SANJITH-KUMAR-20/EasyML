@@ -47,46 +47,46 @@ def train(parameter: TrainRequest, cursor):
     if parameter.type == "Regression":
         if parameter.strategy == "linearreg":
             mod = LinearReg()
-            mod.train(x_train, y_train, **parameter.parameters)
+            mod = mod.train(x_train, y_train, **parameter.parameters)
         elif parameter.strategy == "ridgereg":
             mod = RidgeReg()
-            mod.train(x_train, y_train, **parameter.parameters)
+            mod = mod.train(x_train, y_train, **parameter.parameters)
         elif parameter.strategy == "lassoreg":
             mod = LassoReg()
-            mod.train(x_train, y_train, **parameter.parameters)
+            mod = mod.train(x_train, y_train, **parameter.parameters)
         elif parameter.strategy == "decisiontreereg":
             mod = DecisionTreeReg()
-            mod.train(x_train, y_train, **parameter.parameters)
+            mod = mod.train(x_train, y_train, **parameter.parameters)
         elif parameter.strategy == "randomforestreg":
             mod = RandomForestReg()
-            mod.train(x_train, y_train, **parameter.parameters)
+            mod = mod.train(x_train, y_train, **parameter.parameters)
 
     elif parameter.type == "Classification":
         if parameter.strategy == "logisticreg":
             mod = LogisticReg()
-            mod.train(x_train, y_train, **parameter.parameters)
+            mod = mod.train(x_train, y_train, **parameter.parameters)
         elif parameter.strategy == "decisiontreecls":
             mod = DecisionTreeCls()
-            mod.train(x_train, y_train, **parameter.parameters)
+            mod = mod.train(x_train, y_train, **parameter.parameters)
         elif parameter.strategy == "randomforestcls":
             mod = RandomForestCls()
-            mod.train(x_train, y_train, **parameter.parameters)
+            mod = mod.train(x_train, y_train, **parameter.parameters)
         elif parameter.strategy == "gradientboostingcls":
             mod = GradientBoostingCls()
-            mod.train(x_train, y_train, **parameter.parameters)
+            mod = mod.train(x_train, y_train, **parameter.parameters)
         elif parameter.strategy == "svmcls":
             mod = SVCCls()
-            mod.train(x_train, y_train, **parameter.parameters)
+            mod = mod.train(x_train, y_train, **parameter.parameters)
 
     elif parameter.type == "Clustering":
         if parameter.strategy == "kmeans":
             mod = KMeansClus()
-            mod.train(x_train, **parameter.parameters)
+            mod = mod.train(x_train, **parameter.parameters)
         elif parameter.strategy == "dbscan":
             mod = DBSCANClus()
-            mod.train(x_train, **parameter.parameters)
+            mod = mod.train(x_train, **parameter.parameters)
         elif parameter.strategy == "agglomerative":
             mod = AgglomerativeClus()
-            mod.train(x_train, **parameter.parameters)
+            mod = mod.train(x_train, **parameter.parameters)
 
     return mod

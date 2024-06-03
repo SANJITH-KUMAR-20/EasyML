@@ -1,4 +1,5 @@
 from fastapi import FastAPI, File, UploadFile, Response
+from starlette.responses import StreamingResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from typing import *
@@ -17,6 +18,10 @@ from urllib.parse import quote_plus
 from sqlalchemy import create_engine
 from src.utils.sql import save_splits
 import yaml
+from redis import asyncio as aioredis
+import pickle
+import io
+import uuid
 
 
 class ManipulateRequest(BaseModel):
@@ -54,6 +59,7 @@ db_config = {
 }
 
 DATABASE_URL = f"mysql+pymysql://{user}:{password}@{host}/{database}"
+redis = aioredis.from_url("redis://localhost", decode_responses=False)
 
 engine = create_engine(DATABASE_URL)
 
@@ -73,7 +79,8 @@ async def upload_csv(file: UploadFile = File(...), name: str = "dummy", type: st
             data = pd.read_csv(file_path)
             
             data.to_sql(name, con=engine, if_exists='replace', index=False)
-            os.mkdir("../temp")
+            if not os.path.exists("../temp"):
+                os.mkdir("../temp")
             
             return {"message": "success!"}
     except Exception as e:
@@ -180,7 +187,6 @@ def standardize_data(config :StandardizeRequest) -> None:
         cursor.close()
         connection.close()
         df = pd.DataFrame(rows, columns=column_names)
-        print(df)
         data = standardize(config,df)
         data.to_sql(config.table_name, con=engine, if_exists='replace', index=False)
 
@@ -204,7 +210,6 @@ def encode_data(config :StandardizeRequest) -> None:
         cursor.close()
         connection.close()
         df = pd.DataFrame(rows, columns=column_names)
-        print(df)
         data = encode(config,df)
         data.to_sql(config.table_name, con=engine, if_exists='replace', index=False)
 
@@ -232,8 +237,9 @@ def split_data(config : SplittingRequest):
         x_train,y_train = split(config,df)
         names = save_splits(engine,config.dataset_name,(x_train,y_train))
         config = {
-        "train" : names[0],
-        "test" : names[1]
+        "train_x" : names[0],
+        "train_y" : names[1],
+        "session_id" : str(uuid.uuid4())
         }
         with open('../temp/session_config.yaml', 'w') as file:
             yaml.dump(config, file)
@@ -244,3 +250,52 @@ def split_data(config : SplittingRequest):
         print(e)
         raise HTTPException(status_code=500,detail=str(e))    
     
+@app.post("/train-model")
+async def train_model(config :TrainRequest):
+    try:
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+        mod = train(config, cursor)
+
+        with open('../temp/session_config.yaml', 'r') as file:
+            session_config = yaml.safe_load(file)
+        session_id = session_config["session_id"]
+        pickled_model = pickle.dumps(mod)
+        await redis.set(session_id, pickled_model)
+
+        return {"successfully trained the model"}
+
+    except Exception as e:
+        raise HTTPException(status_code=500,detail=str(e))
+    
+@app.get("/download-model")
+async def download_model(response: Response):
+    try:
+        with open('../temp/session_config.yaml', 'r') as file:
+            session_config = yaml.safe_load(file)
+        session_id = session_config["session_id"]
+        pickled_file = await redis.get(session_id)
+        # model = pickle.loads(pickled_file)
+        file_like = io.BytesIO(pickled_file)
+        file_like.seek(0)
+
+        return StreamingResponse(
+        file_like,
+        media_type="application/octet-stream",
+        headers={"Content-Disposition": f"attachment; filename={session_id}_model.pkl"}
+        )
+    except Exception as e:
+        raise e
+    
+@app.delete("/end-session")
+async def delete_session():
+    try:
+        with open('../temp/session_config.yaml', 'r') as file:
+                session_config = yaml.safe_load(file)
+        session_id = session_config["session_id"]
+        result = await redis.delete(session_id)
+        assert result == 1
+        if os.path.exists("../temp"):
+            os.removedirs("../temp")
+    except Exception as e:
+        raise e
