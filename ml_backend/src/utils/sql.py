@@ -3,6 +3,7 @@ import mysql.connector
 import pandas as pd
 from typing import *
 from mysql.connector import errorcode
+from sqlalchemy import text
 
 def setup_connector(host = "localhost",user = "root",password = "$@njith2003",database = 'mynewdatabase'):
 
@@ -44,17 +45,19 @@ def save_splits(engine, dataset_name, splits : Tuple[pd.DataFrame]) -> Tuple[str
     except Exception as e:
         raise e
     
-def get_data(cursor, datasett_name):
+def get_data(engine, datasett_name):
     train_data_names = (datasett_name + "_train_x", datasett_name + "_train_y")
     query = f"SELECT * FROM {train_data_names[0]}"
     query1 = f"SELECT * FROM {train_data_names[1]}"
-    cursor.execute(query)
-    rows = cursor.fetchall()
-    column_names = [i[0] for i in cursor.description]
+    with engine.connect() as connection:
+        result = connection.execute(text(query))
+        rows = result.fetchall()
+        column_names = result.keys()
     x_train = pd.DataFrame(rows, columns=column_names)
-    cursor.execute(query1)
-    rows = cursor.fetchall()
-    column_names = [i[0] for i in cursor.description]
+    with engine.connect() as connection:
+        result = connection.execute(text(query1))
+        rows = result.fetchall()
+        column_names = result.keys()
     y_train = pd.DataFrame(rows, columns=column_names)
     return x_train,y_train
     

@@ -15,14 +15,15 @@ from fastapi.responses import StreamingResponse
 from io import StringIO
 import mysql.connector
 from urllib.parse import quote_plus
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import SQLAlchemyError
 from src.utils.sql import save_splits
 import yaml
 from redis import asyncio as aioredis
 import pickle
 import io
 import uuid
-
+import uvicorn
 
 app = FastAPI()
 
@@ -39,8 +40,7 @@ db_config = {
     'host': 'localhost',
     'database': 'mynewdatabase'
 }
-
-DATABASE_URL = f"mysql+pymysql://{user}:{password}@{host}/{database}"
+DATABASE_URL = f"mysql+pymysql://{user}:{password}@host.docker.internal/{database}"
 redis = aioredis.from_url("redis://localhost", decode_responses=False)
 
 engine = create_engine(DATABASE_URL)
@@ -71,150 +71,114 @@ async def upload_csv(file: UploadFile = File(...), name: str = "dummy", type: st
 @app.get("/download-table/{table_name}")
 async def download_table_as_csv(table_name: str):
     try:
+        with engine.connect() as connection:
+            result = connection.execute(text(f"SELECT * FROM {table_name}"))
+            rows = result.fetchall()
+            column_names = result.keys()
 
-        connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor()
-        
-        cursor.execute(f"SELECT * FROM {table_name}")
-        rows = cursor.fetchall()
-        column_names = [i[0] for i in cursor.description]
-
-        cursor.close()
-        connection.close()
         df = pd.DataFrame(rows, columns=column_names)
-        df = df.to_csv()
+        csv_data = df.to_csv(index=False)
+        
+        return Response(content=csv_data, media_type="text/csv")
 
-        return Response(content=df, media_type="application/json")
-
-    except mysql.connector.Error as err:
+    except SQLAlchemyError as err:
         raise HTTPException(status_code=500, detail=f"Database error: {err}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/delete-data/{table_name}")
-async def delete_table(table_name:str):
-
+async def delete_table(table_name: str):
     try:
-        connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor()
-        cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
-        connection.commit()
-        cursor.close()
-        connection.close()
+        with engine.connect() as connection:
+            connection.execute(text(f"DROP TABLE IF EXISTS {table_name}"))
+        
+        return {"message": "Data deleted successfully"}
 
-        return {"data deleted successfully"}
-    
-    except mysql.connector.Error as err:
+    except SQLAlchemyError as err:
         raise HTTPException(status_code=500, detail=f"Database error: {err}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
 @app.delete("/drop-column")
-def drop_column(para : DropColumnsRequest):
-
+async def drop_column(para: DropColumnsRequest):
     try:
-        connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor()
-
         drop_cols = ", ".join(f"DROP COLUMN {col}" for col in para.columns)
         query = f"ALTER TABLE {para.table_name} {drop_cols}"
 
-        cursor.execute(query)
-        connection.commit()
-        cursor.close()
-        connection.close()
+        with engine.connect() as connection:
+            connection.execute(text(query))
 
-        return {"column dropped successfully"}
-    
-    except mysql.connector.Error as err:
+        return {"message": "Column dropped successfully"}
+
+    except SQLAlchemyError as err:
         raise HTTPException(status_code=500, detail=f"Database error: {err}")
     except Exception as e:
-        raise HTTPException(status_code=500,detail=str(e))
-    
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/impute-data")
-def impute_data(config : ImputeRequest):
-
+async def impute_data(config: ImputeRequest):
     try:
-        connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor()
-        
-        cursor.execute(f"SELECT * FROM {config.table_name}")
-        rows = cursor.fetchall()
-        column_names = [i[0] for i in cursor.description]
+        with engine.connect() as connection:
+            result = connection.execute(text(f"SELECT * FROM {config.table_name}"))
+            rows = result.fetchall()
+            column_names = result.keys()
 
-        cursor.close()
-        connection.close()
         df = pd.DataFrame(rows, columns=column_names)
-
-        data = impute_columns(config,df)
+        data = impute_columns(config, df)
         data.to_sql(config.table_name, con=engine, if_exists='replace', index=False)
 
-        return {"imputation successful"}
-    except mysql.connector.Error as err:
+        return {"message": "Imputation successful"}
+
+    except SQLAlchemyError as err:
         raise HTTPException(status_code=500, detail=f"Database error: {err}")
     except Exception as e:
-        print(e)
-        raise HTTPException(status_code=500,detail=str(e))
-    
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/standardize-data")
-def standardize_data(config :StandardizeRequest) -> None:
+async def standardize_data(config: StandardizeRequest):
     try:
-        connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor()
-        
-        cursor.execute(f"SELECT * FROM {config.table_name}")
-        rows = cursor.fetchall()
-        column_names = [i[0] for i in cursor.description]
+        with engine.connect() as connection:
+            result = connection.execute(text(f"SELECT * FROM {config.table_name}"))
+            rows = result.fetchall()
+            column_names = result.keys()
 
-        cursor.close()
-        connection.close()
         df = pd.DataFrame(rows, columns=column_names)
-        data = standardize(config,df)
+        data = standardize(config, df)
         data.to_sql(config.table_name, con=engine, if_exists='replace', index=False)
 
-        return {"scaling successful successful"}
-    except mysql.connector.Error as err:
+        return {"message": "Scaling successful"}
+
+    except SQLAlchemyError as err:
         raise HTTPException(status_code=500, detail=f"Database error: {err}")
     except Exception as e:
-        print(e)
-        raise HTTPException(status_code=500,detail=str(e))
-    
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/encode-data")
-def encode_data(config :StandardizeRequest) -> None:
+async def encode_data(config: StandardizeRequest):
     try:
-        connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor()
-        
-        cursor.execute(f"SELECT * FROM {config.table_name}")
-        rows = cursor.fetchall()
-        column_names = [i[0] for i in cursor.description]
+        with engine.connect() as connection:
+            result = connection.execute(text(f"SELECT * FROM {config.table_name}"))
+            rows = result.fetchall()
+            column_names = result.keys()
 
-        cursor.close()
-        connection.close()
         df = pd.DataFrame(rows, columns=column_names)
-        data = encode(config,df)
+        data = encode(config, df)
         data.to_sql(config.table_name, con=engine, if_exists='replace', index=False)
 
-        return {"encoding successful"}
-    except mysql.connector.Error as err:
+        return {"message": "Encoding successful"}
+
+    except SQLAlchemyError as err:
         raise HTTPException(status_code=500, detail=f"Database error: {err}")
     except Exception as e:
-        print(e)
-        raise HTTPException(status_code=500,detail=str(e))
-
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/split-data")
 def split_data(config : SplittingRequest):
     try:
-        connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor()
-        
-        cursor.execute(f"SELECT * FROM {config.dataset_name}")
-        rows = cursor.fetchall()
-        column_names = [i[0] for i in cursor.description]
-
-        cursor.close()
-        connection.close()
+        with engine.connect() as connection:
+            result = connection.execute(text(f"SELECT * FROM {config.dataset_name}"))
+            rows = result.fetchall()
+            column_names = result.keys()
         df = pd.DataFrame(rows, columns=column_names)
         x_train,y_train = split(config,df)
         names = save_splits(engine,config.dataset_name,(x_train,y_train))
@@ -226,7 +190,7 @@ def split_data(config : SplittingRequest):
         with open('../temp/session_config.yaml', 'w') as file:
             yaml.dump(config, file)
         return {"successful split"}
-    except mysql.connector.Error as err:
+    except SQLAlchemyError as err:
         raise HTTPException(status_code=500, detail=f"Database error: {err}")
     except Exception as e:
         print(e)
@@ -235,9 +199,8 @@ def split_data(config : SplittingRequest):
 @app.post("/train-model")
 async def train_model(config :TrainRequest):
     try:
-        connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor()
-        mod = train(config, cursor)
+        
+        mod = train(config, engine)
 
         with open('../temp/session_config.yaml', 'r') as file:
             session_config = yaml.safe_load(file)
@@ -281,3 +244,6 @@ async def delete_session():
             os.removedirs("../temp")
     except Exception as e:
         raise e
+    
+if __name__ == "__main__":
+    uvicorn.run(app,host="0.0.0.0",port=8000)

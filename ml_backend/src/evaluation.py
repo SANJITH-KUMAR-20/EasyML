@@ -132,7 +132,7 @@ class ARI(Evaluation):
             ari = adjusted_rand_score(y_true, y_pred)
             logging.info(f"Successfully Calculated Adjusted Rand Index -> {ari}")
             return ari
-        except Exception as e:
+        except Exception as e: 
             logging.error(f"Adjusted Rand Index calculation failed due to {e}")
             raise e
 

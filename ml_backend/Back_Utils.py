@@ -41,8 +41,8 @@ def split(parameter : SplittingRequest, data : pd.DataFrame):
     x_train, y_train = splitter.handle_split(parameter.train_test_split)
     return x_train,y_train
 
-def train(parameter: TrainRequest, cursor):
-    x_train, y_train = get_data(cursor, parameter.dataset_name)
+def train(parameter: TrainRequest, engine):
+    x_train, y_train = get_data(engine, parameter.dataset_name)
     
     if parameter.type == "Regression":
         if parameter.strategy == "linearreg":
