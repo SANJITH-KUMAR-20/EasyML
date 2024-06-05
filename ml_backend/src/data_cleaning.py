@@ -10,8 +10,28 @@ from pandas.core.api import Series as Series
 from sklearn.model_selection import train_test_split
 from sklearn.impute import *
 from sklearn.base import *
+from typing import *
+from pydantic import BaseModel,Field
 # from sklearn.experimental import enable_iterative_imputer
 
+class ImputeRequest(BaseModel):
+    """
+    Config for imputation
+    """
+    strategy: str = Field("Simple_Imputer", description="Imputation strategy (e.g., 'Simple Imputer', 'KNN Imputer')")
+    columns: List[str] = Field(..., description="List of columns to impute")
+    table_name: str = Field(..., description="Name of the table")
+    parameters: Dict[str, Union[int, str, float]] = Field(default_factory=dict, description="Parameters for the imputation strategy")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "strategy": "Simple_Imputer",
+                "columns": ["column1", "column2"],
+                "table_name": "your_table",
+                "parameters": {"strategy": "mean"}
+            }
+        }
 # enable_iterative_imputer()
 class DataStrategy(ABC):
 
@@ -33,26 +53,29 @@ class Imputer(DataStrategy):
         self.data.fillna(np.nan)
 
 
-    def handle_data(self,column : str | list,Impute_Strategy : str = "Simple_Imputer", strategy : str = "mean", constant : int | str |float = None, n_nearest_features : int = None
-                    ,weights : str = "uniform") -> pd.DataFrame | pd.Series:
+    def handle_data(self,parameter : ImputeRequest) -> pd.DataFrame | pd.Series:
         
         """
         function for imputation
         """
         if self.data.empty:
             raise Exception(ValueError)
-        if Impute_Strategy == "Simple_Imputer":
-            if strategy == "constant" and not constant:
+        if parameter.strategy == "Simple_Imputer":
+            if parameter.parameters["strategy"] == "constant" and not parameter.parameters["constant"]:
                 raise Exception(f"Enter the constant Value")
-            self._simple_impute(column, strategy, constant)
+            if parameter.parameters["strategy"] == "constant":
+                self._simple_impute(parameter.columns, parameter.parameters["strategy"], parameter.parameters["constant"])
+
+            else:
+                self._simple_impute(parameter.columns, parameter.parameters["strategy"])
         # elif Impute_Strategy == "Iterative_Imputer":
         #     if not strategy == "constant" and constant:
         #         raise Exception(f"Enter the constant Value")
         #     self._iterative_imputer(column, strategy, constant, n_nearest_features)
-        elif Impute_Strategy == "KNN_Imputer":
-            if not n_nearest_features:
+        elif parameter.strategy == "KNN_Imputer":
+            if not parameter.parameters["n_nearest_features"]:
                 raise Exception(f"Enter the n_nearest_features")
-            self._knn_imputer(column, weights, n_nearest_features)
+            self._knn_imputer(parameter.columns, parameter.parameters["weights"], parameter.parameters["n_nearest_features"])
         else:
             raise Exception("No Such Impute Strategy")
         
@@ -62,7 +85,7 @@ class Imputer(DataStrategy):
 
         imputer = SimpleImputer(missing_values= np.nan, strategy= strategy, fill_value= constant)
         try:
-            self.data[column] = imputer.fit_transform(self.data[[column]])
+            self.data[column] = imputer.fit_transform(self.data[column])
         except Exception as e:
             logging.error(f"Error: {e}")
             raise e
@@ -80,7 +103,7 @@ class Imputer(DataStrategy):
 
         imputer = KNNImputer(missing_values= np.nan, weights= weights, n_neighbors= n_nearest_neigbours)
         try:
-            self.data[column] = imputer.fit_transform(self.data[[column]])
+            self.data[column] = imputer.fit_transform(self.data[column])
         except Exception as e:
             logging.error(f"Error: {e}")
             raise e
