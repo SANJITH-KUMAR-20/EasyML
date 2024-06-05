@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, Response
+from fastapi import FastAPI, File, UploadFile, Response, Request
 from starlette.responses import StreamingResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -41,8 +41,10 @@ db_config = {
     'database': 'mynewdatabase'
 }
 DATABASE_URL = f"mysql+pymysql://{user}:{password}@host.docker.internal/{database}"
-redis = aioredis.from_url("redis://localhost", decode_responses=False)
-
+redis_host = os.getenv('REDIS_HOST', 'localhost')
+redis_port = int(os.getenv('REDIS_PORT', 6379))
+redis = aioredis.from_url(f"redis://{redis_host}:{redis_port}", decode_responses=False)
+session_id = str(uuid.uuid4())
 engine = create_engine(DATABASE_URL)
 
 @app.post("/upload_csv")
@@ -61,8 +63,8 @@ async def upload_csv(file: UploadFile = File(...), name: str = "dummy", type: st
             data = pd.read_csv(file_path)
             
             data.to_sql(name, con=engine, if_exists='replace', index=False)
-            if not os.path.exists("../temp"):
-                os.mkdir("../temp")
+            # if not os.path.exists("../temp"):
+            #     os.mkdir("../temp")
             
             return {"message": "success!"}
     except Exception as e:
@@ -173,7 +175,7 @@ async def encode_data(config: StandardizeRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/split-data")
-def split_data(config : SplittingRequest):
+async def split_data(config : SplittingRequest):
     try:
         with engine.connect() as connection:
             result = connection.execute(text(f"SELECT * FROM {config.dataset_name}"))
@@ -185,10 +187,10 @@ def split_data(config : SplittingRequest):
         config = {
         "train_x" : names[0],
         "train_y" : names[1],
-        "session_id" : str(uuid.uuid4())
+        "model_id" : [-1]
         }
-        with open('../temp/session_config.yaml', 'w') as file:
-            yaml.dump(config, file)
+        pickled_config = pickle.dumps(config)
+        await redis.set(session_id + "_config", pickled_config)
         return {"successful split"}
     except SQLAlchemyError as err:
         raise HTTPException(status_code=500, detail=f"Database error: {err}")
@@ -202,11 +204,12 @@ async def train_model(config :TrainRequest):
         
         mod = train(config, engine)
 
-        with open('../temp/session_config.yaml', 'r') as file:
-            session_config = yaml.safe_load(file)
-        session_id = session_config["session_id"]
+        
+        session_config = await redis.get(session_id + "_config")
+        session_config = pickle.loads(session_config)
+        model_id =1 if max(session_config["model_id"]) == -1 else max(session_config["model_id"]) + 1
         pickled_model = pickle.dumps(mod)
-        await redis.set(session_id, pickled_model)
+        await redis.set(session_id + f"_model_{model_id}", pickled_model)
 
         return {"successfully trained the model"}
 
@@ -216,10 +219,11 @@ async def train_model(config :TrainRequest):
 @app.get("/download-model")
 async def download_model(response: Response):
     try:
-        with open('../temp/session_config.yaml', 'r') as file:
-            session_config = yaml.safe_load(file)
-        session_id = session_config["session_id"]
-        pickled_file = await redis.get(session_id)
+        session_config = await redis.get(session_id + "_config")
+        session_config = pickle.loads(session_config)
+        model_id =1 if max(session_config["model_id"]) == -1 else max(session_config["model_id"]) + 1
+        
+        pickled_file = await redis.get(session_id + f"_model_{model_id}")
         # model = pickle.loads(pickled_file)
         file_like = io.BytesIO(pickled_file)
         file_like.seek(0)

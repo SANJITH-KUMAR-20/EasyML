@@ -46,19 +46,21 @@ def save_splits(engine, dataset_name, splits : Tuple[pd.DataFrame]) -> Tuple[str
         raise e
     
 def get_data(engine, datasett_name):
-    train_data_names = (datasett_name + "_train_x", datasett_name + "_train_y")
-    query = f"SELECT * FROM {train_data_names[0]}"
-    query1 = f"SELECT * FROM {train_data_names[1]}"
-    with engine.connect() as connection:
-        result = connection.execute(text(query))
-        rows = result.fetchall()
-        column_names = result.keys()
-    x_train = pd.DataFrame(rows, columns=column_names)
-    with engine.connect() as connection:
-        result = connection.execute(text(query1))
-        rows = result.fetchall()
-        column_names = result.keys()
-    y_train = pd.DataFrame(rows, columns=column_names)
-    return x_train,y_train
-    
+    try:
+        train_data_names = (datasett_name + "_train_x", datasett_name + "_train_y")
+        query = f"SELECT * FROM {train_data_names[0]}"
+        query1 = f"SELECT * FROM {train_data_names[1]}"
+        with engine.connect() as connection:
+            result = connection.execute(text(query))
+            rows = result.fetchall()
+            column_names = result.keys()
+        x_train = pd.DataFrame(rows, columns=column_names)
+        with engine.connect() as connection:
+            result = connection.execute(text(query1))
+            rows = result.fetchall()
+            column_names = result.keys()
+        y_train = pd.DataFrame(rows, columns=column_names)
+        return x_train,y_train
+    except Exception as e:
+        raise e
 
