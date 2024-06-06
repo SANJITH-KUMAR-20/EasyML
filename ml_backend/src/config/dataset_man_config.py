@@ -4,6 +4,17 @@ from pydantic import BaseModel,Field
 
 
 
+class LoginRequest(BaseModel):
+    """
+    Config for Creating an Account
+    """
+    kind : str = Field("create_account", description="type of process, create account or login")
+    user_name : str = Field("chevalier", description="the name of the user")
+    email_id : str = Field("hfghfghd@gmail.com", description= "the mail id of the user")
+    password: str
+    reconfirm_password : str = None
+
+
 class DataConfig(BaseModel):
 
     """
@@ -22,6 +33,27 @@ class DropColumnsRequest(BaseModel):
 
     table_name: str
     columns: list[str]
+
+class ManipulateRequest(BaseModel):
+
+    kind: str = Field("encode_data", description= "manipulation type i.e. 'encode_data','standardize_data','impute_data'")
+    strategy: str = Field("Simple_Imputer", description="Imputation strategy (e.g., 'Simple Imputer', 'KNN Imputer')")
+    columns: List[str] = Field(..., description="List of columns to impute")
+    table_name: str = Field(..., description="Name of the table")
+    parameters: Dict[str, Union[int, str, float]] = Field(default_factory=dict, description="Parameters for the imputation strategy")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "strategy": "Simple_Imputer",
+                "columns": ["column1", "column2"],
+                "table_name": "your_table",
+                "parameters": {"strategy": "mean"}
+            }
+        }
+
+
+
 
 class ImputeRequest(BaseModel):
     """

@@ -24,28 +24,68 @@ import pickle
 import io
 import uuid
 import uvicorn
+import dotenv
 
 app = FastAPI()
 
+content = dotenv.load_dotenv(".env")
 
-host = "localhost"
-user = "root"
-password = "$@njith2003"
-database = 'mynewdatabase'
+host = os.environ['HOST']
+user = os.environ['USER']
+password = os.environ['PASSWORD']
+database = os.environ['DATABASE']
 password = quote_plus(password)
 
-db_config = {
-    'user': 'root',
-    'password': '$@njith2003',
-    'host': 'localhost',
-    'database': 'mynewdatabase'
-}
+
 DATABASE_URL = f"mysql+pymysql://{user}:{password}@host.docker.internal/{database}"
 redis_host = os.getenv('REDIS_HOST', 'localhost')
 redis_port = int(os.getenv('REDIS_PORT', 6379))
 redis = aioredis.from_url(f"redis://{redis_host}:{redis_port}", decode_responses=False)
 session_id = str(uuid.uuid4())
 engine = create_engine(DATABASE_URL)
+
+
+#ROUTES FOR LOGIN AND SESSION SETUP
+
+@app.post("/create_account")
+def create_or_login_account(login : LoginRequest):
+
+    if login.kind == "create_account":
+         
+         with engine.connect() as connection:
+             result = connection.execute(text(f"SELECT EXISTS (SELECT 1 FROM user WHERE mail_id = {login.email_id}) AS is_present"))
+             if result.fetchone()[0]:
+                 return {"User account already exists"}
+             else:
+                 if login.password != login.reconfirm_password:
+                     return {"Enter the same password in both the fields"}
+                 query = f"INSERT INTO user (user_name, mail_id, password) VALUES ('{login.user_name}','{login.email_id}','{login.password}')"
+                 try:
+                    result = connection.execute(text(query))
+                    return {'msg' : "User Account Created Successfully."}
+                 except Exception as e:
+                     raise f"Exception while inserting {e}"
+    elif login.kind == "login":
+        result = connection.execute(text(f"SELECT EXISTS (SELECT 1 FROM user WHERE mail_id = {login.email_id}) AS is_present"))
+        if not result.fetchone()[0]:
+            return {"No such User account."}
+        else:
+            query = f"SELECT password,permanent_session_id FROM user WHERE mail_id = '{login.email_id}'"
+            result = connection.execute(text(query))
+            result = result.fetchone()
+            login_password = result[0]
+            session_id = result[1]
+
+            if login_password == login.password:
+                return {'msg' : 'successful login', 'status' : True}
+
+
+
+
+
+
+
+
 
 @app.post("/upload_csv")
 async def upload_csv(file: UploadFile = File(...), name: str = "dummy", type: str = "csv"):
@@ -71,7 +111,7 @@ async def upload_csv(file: UploadFile = File(...), name: str = "dummy", type: st
         return {"message": f"An error occurred: {str(e)}"}
     
 @app.get("/download-table/{table_name}")
-async def download_table_as_csv(table_name: str):
+async def view_table_as_csv(table_name: str):
     try:
         with engine.connect() as connection:
             result = connection.execute(text(f"SELECT * FROM {table_name}"))
@@ -172,6 +212,35 @@ async def encode_data(config: StandardizeRequest):
     except SQLAlchemyError as err:
         raise HTTPException(status_code=500, detail=f"Database error: {err}")
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/manipulate/{kind}")
+def manipulate(config: ManipulateRequest, kind:str):
+     try:
+        with engine.connect() as connection:
+            result = connection.execute(text(f"SELECT * FROM {config.table_name}"))
+            rows = result.fetchall()
+            column_names = result.keys()
+        if kind == "encode_data":
+            df = pd.DataFrame(rows, columns=column_names)
+            data = encode(config, df)
+            data.to_sql(config.table_name, con=engine, if_exists='replace', index=False)
+            return {"message": "Encoding successful"}
+        
+        elif kind == "standardize_data":
+            df = pd.DataFrame(rows, columns=column_names)
+            data = standardize(config, df)
+            data.to_sql(config.table_name, con=engine, if_exists='replace', index=False)
+        elif kind == "impute_data":
+            df = pd.DataFrame(rows, columns=column_names)
+            data = impute_columns(config, df)
+            data.to_sql(config.table_name, con=engine, if_exists='replace', index=False)
+        else:
+            raise HTTPException(status_code=500, detail = f"no such manipulation strategy : {kind}")
+
+     except SQLAlchemyError as err:
+        raise HTTPException(status_code=500, detail=f"Database error: {err}")
+     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/split-data")

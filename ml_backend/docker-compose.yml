@@ -7,13 +7,39 @@ services:
       ports:
        - "8000:8000"
       environment:
-        REDIS_HOST: redis
-        REDIS_PORT: 6379
+        - DATA_BASE_URL = mysql+pymysql://root:$@njith2003@host.docker.internal/mynewdatabase
+        - REDIS_HOST = redis
+        - REDIS_PORT = 6379
       depends_on:
         - redis
+        - mysql
+      networks:
+        - backend
 
   redis:
     image: redis:latest
     container_name: myredis
     ports:
       - "6379:6379"
+
+    networks:
+      - backend
+
+  mysql:
+    image: mysql:latest
+    container_name: mysql_Server
+
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=$@njith2003
+      - MYSQL_DATABASE=mynewdatabase
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - backend
+
+    
+
+networks:
+  backend:
+    driver: bridge
