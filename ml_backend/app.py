@@ -30,55 +30,89 @@ app = FastAPI()
 
 content = dotenv.load_dotenv(".env")
 
+#DOCKER MYSQL_SERVER VARIABLES
+docker_host = os.getenv('DOCKER_DB_HOST', 'mysql_server')
+docker_port = os.getenv('DOCKER_DB_PORT', '3306')
+docker_user = os.getenv('DOCKER_DB_USER', 'root')
+docker_password = os.getenv('MYSQL_ROOT_PASSWORD', 'rootpassword')
+docker_database = os.getenv('MYSQL_DATABASE', 'mynewdatabase')
+docker_password = quote_plus(docker_password)
+#ENV VARIABLES
 host = os.environ['HOST']
 user = os.environ['USER']
 password = os.environ['PASSWORD']
 database = os.environ['DATABASE']
 password = quote_plus(password)
 
-
+#CONNECTIONS
 DATABASE_URL = f"mysql+pymysql://{user}:{password}@host.docker.internal/{database}"
+DOCKER_DATABASE_URL = f"mysql+pymysql://{docker_user}:{docker_password}@{docker_host}:{docker_port}/{docker_database}"
 redis_host = os.getenv('REDIS_HOST', 'localhost')
 redis_port = int(os.getenv('REDIS_PORT', 6379))
 redis = aioredis.from_url(f"redis://{redis_host}:{redis_port}", decode_responses=False)
 session_id = str(uuid.uuid4())
 engine = create_engine(DATABASE_URL)
+docker_engine = create_engine(DOCKER_DATABASE_URL)
 
 
 #ROUTES FOR LOGIN AND SESSION SETUP
 
 @app.post("/create_account")
-def create_or_login_account(login : LoginRequest):
-
-    if login.kind == "create_account":
-         
-         with engine.connect() as connection:
-             result = connection.execute(text(f"SELECT EXISTS (SELECT 1 FROM user WHERE mail_id = {login.email_id}) AS is_present"))
-             if result.fetchone()[0]:
-                 return {"User account already exists"}
-             else:
-                 if login.password != login.reconfirm_password:
-                     return {"Enter the same password in both the fields"}
-                 query = f"INSERT INTO user (user_name, mail_id, password) VALUES ('{login.user_name}','{login.email_id}','{login.password}')"
-                 try:
-                    result = connection.execute(text(query))
-                    return {'msg' : "User Account Created Successfully."}
-                 except Exception as e:
-                     raise f"Exception while inserting {e}"
-    elif login.kind == "login":
-        result = connection.execute(text(f"SELECT EXISTS (SELECT 1 FROM user WHERE mail_id = {login.email_id}) AS is_present"))
-        if not result.fetchone()[0]:
-            return {"No such User account."}
-        else:
-            query = f"SELECT password,permanent_session_id FROM user WHERE mail_id = '{login.email_id}'"
-            result = connection.execute(text(query))
-            result = result.fetchone()
-            login_password = result[0]
-            session_id = result[1]
-
-            if login_password == login.password:
-                return {'msg' : 'successful login', 'status' : True}
-
+async def create_or_login_account(login : LoginRequest):
+    try:
+        with engine.connect() as connection:
+            if login.kind == "create_account":
+                
+                    result = connection.execute(text(f"SELECT EXISTS (SELECT 1 FROM user WHERE mail_id = '{login.email_id}') AS is_present"))
+                    if result.fetchone()[0]:
+                        return {"User account already exists"}
+                    else:
+                        if login.password != login.reconfirm_password:
+                            return {"Enter the same password in both the fields"}
+                        query = text(f"INSERT INTO user (user_name, mail_id, password) VALUES (:user_name, :email_id, :password)")
+                        connection.execute(query, {"user_name": login.user_name, "email_id": login.email_id, "password": login.password})
+                        connection.commit()
+                        return {'msg' : "User Account Created Successfully."}
+                        
+            elif login.kind == "login":
+                with engine.connect() as connection, docker_engine.connect() as docker_connection:
+                    result = connection.execute(text(f"SELECT EXISTS (SELECT 1 FROM user WHERE mail_id = '{login.email_id}') AS is_present"))
+                    if not result.fetchone()[0]:
+                        return {"No such User account."}
+                    else:
+                        query = f"SELECT password,permanent_session_id FROM user WHERE mail_id = '{login.email_id}'"
+                        result = connection.execute(text(query))
+                        result = result.fetchone()
+                        login_password = result[0]
+                        if login_password == login.password:
+                            session_id = result[1]
+                            query = f"INSERT INTO usersession (user_session_id, model_table_name) VALUES ('{session_id}','{'model_'+session_id.replace('-', '')}')"
+                            docker_connection.execute(text(query))
+                            docker_connection.commit()
+                            model_table_query = f"""
+                                CREATE TABLE IF NOT EXISTS `{'model_'+session_id.replace('-', '')}` (
+                                `model_id` VARCHAR (255) NOT NULL UNIQUE,
+                                `model_name` VARCHAR(255),
+                                `mse` FLOAT,
+                                `mae` FLOAT,
+                                `r2` FLOAT,
+                                `accuracy` FLOAT,
+                                `precision` FLOAT,
+                                `recall` FLOAT,
+                                `f1` FLOAT,
+                                `ari` FLOAT,
+                                `nmi` FLOAT,
+                                `sil` FLOAT,
+                                PRIMARY KEY(`model_id`)
+                                );"""
+                            docker_connection.execute(text(model_table_query))
+                            docker_connection.commit()
+                        
+                            return {'msg' : 'successful login', 'status' : True, 'sessionid' : session_id}
+    except SQLAlchemyError as err:
+        raise HTTPException(status_code=500, detail=f"Database error: {err}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 
