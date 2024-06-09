@@ -5,7 +5,9 @@ from src.model_dev import *
 import pandas as pd
 from src.config.dataset_man_config import *
 from typing import List
+from sklearn.base import RegressorMixin, ClassifierMixin, ClusterMixin
 from src.utils.sql import *
+from src.evaluation import *
 
 
 def drop_column(column: List[str], data : pd.DataFrame) -> pd.DataFrame:
@@ -90,3 +92,30 @@ def train(parameter: TrainRequest, engine):
             mod = mod.train(x_train, **parameter.parameters)
 
     return mod
+
+def evaluate(kind : str, model : Union[RegressorMixin, ClassifierMixin, ClusterMixin],data : Tuple[pd.DataFrame]) -> Dict[str,float]:
+
+    x_test, y_test = data[0], data[1]
+
+    y_pred = model.predict(x_test)
+    y_test = np.squeeze(y_test.to_numpy())
+    y_pred = np.squeeze(y_pred)
+
+    if kind == "regression":
+        mse = MSE().calculate_scores(y_test,y_pred)
+        mae = MAE().calculate_scores(y_test,y_pred)
+        r2 = R2().calculate_scores(y_test,y_pred)
+        return {"r2" : r2,"mae" : mae,"mse" : mse}
+    
+    elif kind == "classification":
+        acc = Accuracy().calculate_scores(y_test,y_pred)
+        prec = Precision().calculate_scores(y_test,y_pred)
+        f1 = F1().calculate_scores(y_test,y_pred)
+        recall = Recall().calculate_scores(y_test,y_pred)
+        return {"accuracy" : acc, "prec" : prec,"f1" : f1,"recall" : recall}
+    
+    elif kind == "clustering":
+        pass
+
+    else:
+        raise Exception("No such Method")  

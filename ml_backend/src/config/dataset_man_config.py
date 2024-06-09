@@ -162,3 +162,16 @@ class SplittingRequest(BaseModel):
                 "y_column" : "column_to_predict"
             }
         }
+
+
+class EvaluateModelRequest(BaseModel):
+    """
+    Config for evaluating 
+    """
+
+    user_session_id : str  #user session id
+    evaluate_mode : Literal["all","selected"] = "selected" #whether to evaluate selected model or all models
+    model_kind : List[str] = Field(default=list, description="List the model categories") #not by user
+    model_name : List[str] = Field(default_factory=list, description= "List of models to evaluate")
+    evaluation_on : Literal["test_set", "uploaded data"] = Field(..., description="data on which evaluation to be performed")
+    dataset : str = Field(...,description="dataset to test if uploaded/test_set")

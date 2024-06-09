@@ -58,7 +58,7 @@ docker_engine = create_engine(DOCKER_DATABASE_URL)
 #ROUTES FOR LOGIN AND SESSION SETUP
 
 @app.post("/create_account")
-async def create_or_login_account(login : LoginRequest):
+def create_or_login_account(login : LoginRequest):
     try:
         with engine.connect() as connection:
             if login.kind == "create_account":
@@ -115,9 +115,38 @@ async def create_or_login_account(login : LoginRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/evaluate_model")
+async def evaluate_model(request : EvaluateModelRequest):
 
-
-
+    try:
+        with engine.connect() as connection, docker_engine.connect() as docker_connection:
+            query = f"SELECT model_table_name FROM usersession WHERE user_session_id = {request.user_session_id}"
+            result = docker_connection.execute(text(query))
+            model_table_name = result.fetchone()[0]
+            for model_name, kind in zip(request.model_name, request.model_kind):
+                query = f"SELECT model_id FROM {model_table_name} WHERE model_name = {model_name}"
+                result = docker_connection.execute(text(query))
+                model_id = result.fetchone()[0]
+                pickled_file = await redis.get(model_id)
+                model = pickle.loads(pickled_file)
+                if request.evaluate_on == "test_set":
+                    test_x,test_y = get_data(engine,request.dataset,type="test")
+                else:
+                    test_x,test_y = get_data(engine, request.dataset,type="test_data")
+                results = evaluate(kind,model,(test_x,test_y))
+                if kind == "regression":
+                    query =f"INSERT INTO {model_table_name} (mse, mae, r2) VALUES ('{results["mse"]}', '{results["mae"]}', '{results["r2"]}')"
+                elif kind == "classification":
+                    query = f"INSERT INTO {model_table_name} (accuracy, precision, recall, f1) VALUES ('{results["accuracy"]}', '{results["prec"]}', '{results["recall"]}','{results["f1"]}')"
+                else:
+                    raise HTTPException(status_code=500, detail=f"No such kind")
+                docker_connection.execute(text(query))
+                docker_connection.commit()
+                
+    except SQLAlchemyError as err:
+        raise HTTPException(status_code=500, detail=f"Database error: {err}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 

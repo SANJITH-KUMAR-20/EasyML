@@ -38,29 +38,33 @@ def save_splits(engine, dataset_name, splits : Tuple[pd.DataFrame]) -> Tuple[str
     try:
         train_x = splits[0]
         train_y = splits[1]
-        names = (dataset_name + "_train_x", dataset_name + "_train_y")
+        test_x = splits[2]
+        test_y = splits[3]
+        names = (dataset_name + "_train_x", dataset_name + "_train_y",dataset_name + "_test_x", dataset_name + "_test_y")
         train_x.to_sql(names[0],engine,if_exists="replace",index=False)
         train_y.to_sql(names[1],engine,if_exists="replace",index=False)
+        test_x.to_sql(names[2],engine,if_exists="replace",index=False)
+        test_y.to_sql(names[3],engine,if_exists="replace",index=False)
         return names
     except Exception as e:
         raise e
     
-def get_data(engine, datasett_name):
+def get_data(engine, datasett_name,type = "train"):
     try:
-        train_data_names = (datasett_name + "_train_x", datasett_name + "_train_y")
+        train_data_names = (datasett_name + f"_{type}_x", datasett_name + f"_{type}_y")
         query = f"SELECT * FROM {train_data_names[0]}"
         query1 = f"SELECT * FROM {train_data_names[1]}"
         with engine.connect() as connection:
             result = connection.execute(text(query))
             rows = result.fetchall()
             column_names = result.keys()
-        x_train = pd.DataFrame(rows, columns=column_names)
+        x = pd.DataFrame(rows, columns=column_names)
         with engine.connect() as connection:
             result = connection.execute(text(query1))
             rows = result.fetchall()
             column_names = result.keys()
-        y_train = pd.DataFrame(rows, columns=column_names)
-        return x_train,y_train
+        y = pd.DataFrame(rows, columns=column_names)
+        return x,y
     except Exception as e:
         raise e
 
