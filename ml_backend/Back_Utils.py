@@ -40,8 +40,8 @@ def standardize(parameter : StandardizeRequest, data : pd.DataFrame):
 
 def split(parameter : SplittingRequest, data : pd.DataFrame):
     splitter = Splitter(data,parameter.strategy,parameter.y_column)
-    x_train, y_train = splitter.handle_split(parameter.train_test_split)
-    return x_train,y_train
+    x_train, y_train, x_test, y_test = splitter.handle_split(parameter.train_test_split)
+    return x_train,y_train, x_test, y_test
 
 def train(parameter: TrainRequest, engine):
     x_train, y_train = get_data(engine, parameter.dataset_name)

@@ -4,6 +4,10 @@ import pandas as pd
 from typing import *
 from mysql.connector import errorcode
 from sqlalchemy import text
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import func, case, Column,String,Float
+from sqlalchemy.ext.declarative import declarative_base
+
 
 def setup_connector(host = "localhost",user = "root",password = "$@njith2003",database = 'mynewdatabase'):
 
@@ -67,4 +71,96 @@ def get_data(engine, datasett_name,type = "train"):
         return x,y
     except Exception as e:
         raise e
+    
+def sort_evaluation_scores(engine,table_name : str, kind : Literal["Regression", "Classification", "Clustering"]) -> None:
+    Session = sessionmaker(bind = engine)
+    Base = declarative_base()
+
+    class Model(Base):
+        __tablename__ = table_name
+        model_id = Column(String, primary_key=True)
+        model_name = Column(String)
+        kind = Column(String)
+        total_score = Column(Float)
+        mse = Column(Float)
+        mae = Column(Float)
+        r2 = Column(Float)
+        accuracy = Column(Float)
+        precision = Column(Float)
+        recall = Column(Float)
+        f1 = Column(Float)
+        ari = Column(Float)
+        nmi = Column(Float)
+        sil = Column(Float)
+        average_score = Column(Float)
+
+    session = Session()
+
+    #Update avergae_score for classification models
+    session.query(Model).filter(Model.kind == 'Regression').update({
+    Model.average_score: (
+        (func.coalesce(Model.mse, 0) + func.coalesce(Model.mae, 0) + func.coalesce(Model.r2, 0)) / 3
+    )
+    })
+    session.commit()
+
+    # Update average_score for classification models
+    session.query(Model).filter(Model.kind == 'Classification').update({
+        Model.average_score: (
+            (func.coalesce(Model.accuracy, 0) + func.coalesce(Model.precision, 0) + func.coalesce(Model.recall, 0) + func.coalesce(Model.f1, 0)) / 4
+        )
+    })
+    session.commit()
+
+    # Update average_score for clustering models
+    session.query(Model).filter(Model.kind == 'Clustering').update({
+        Model.average_score: (
+            (func.coalesce(Model.ari, 0) + func.coalesce(Model.nmi, 0) + func.coalesce(Model.sil, 0)) / 3
+        )
+    })
+    session.commit()
+
+def get_best(engine, table_name : str, kind : Literal["Regression", "Classification", "Clustering"]) -> dict:     
+    Session = sessionmaker(bind = engine)
+    Base = declarative_base()
+
+    class Model(Base):
+        __tablename__ = table_name
+        model_id = Column(String, primary_key=True)
+        model_name = Column(String)
+        kind = Column(String)
+        total_score = Column(Float)
+        mse = Column(Float)
+        mae = Column(Float)
+        r2 = Column(Float)
+        accuracy = Column(Float)
+        precision = Column(Float)
+        recall = Column(Float)
+        f1 = Column(Float)
+        ari = Column(Float)
+        nmi = Column(Float)
+        sil = Column(Float)
+        average_score = Column(Float)
+
+    session = Session()    
+    subquery = session.query(
+        Model.kind,
+        func.max(Model.average_score).label('max_score')
+    ).group_by(Model.kind).subquery()
+
+    best_models = session.query(Model).join(
+        subquery,
+        (Model.kind == subquery.c.kind) & (Model.average_score == subquery.c.max_score)
+    ).all()
+    result = {}
+    for model in best_models:
+        result[model.kind] = {
+            "model_id" : model.model_id,
+            "model_name" : model.model_name,
+            "model_score" :  model.average_score
+        }
+
+    return result
+
+
 

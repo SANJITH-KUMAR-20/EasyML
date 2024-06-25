@@ -122,7 +122,8 @@ class TrainRequest(BaseModel):
     """
     Config for Training a model.
     """
-
+    model_name : str = Field(...,description="name of your model")
+    user_session_id : str = Field(...,description="user session id")
     type : str = Field("Regression", description="Type of problem i.e. Classification , Regression...")
     strategy : str = Field("LinearRegression", description= "Type of model to train i.e. Linear Regressor,Logistic Regressor")
     dataset_name : str = Field(..., description="Name of the table or dataset")
@@ -131,6 +132,7 @@ class TrainRequest(BaseModel):
     class Config:
         json_schema_extra = {
             "example" : {
+                "user_session_id" : "-",
                 "type" : "Regression",
                 "strategy" : "Linear Regression",
                 "dataset_name" : "your_dataset_name",
@@ -144,6 +146,7 @@ class SplittingRequest(BaseModel):
     """
     Config for splitting data
     """
+    user_session_id : str = Field(...,description="user session id")
     train_test_split : float = Field(...,description="train test split percentage")
     dataset_name : str = Field(..., description="Name of the table or dataset to split")
     strategy : str = Field(..., description= "strategy to split")
@@ -153,6 +156,7 @@ class SplittingRequest(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
+                "user_session_id" : "-",
                 "train_test_split" : "0.8",
                 "dataset_name" : "your_table_name",
                 "strategy" : "TrainTestSplit",
@@ -175,3 +179,33 @@ class EvaluateModelRequest(BaseModel):
     model_name : List[str] = Field(default_factory=list, description= "List of models to evaluate")
     evaluation_on : Literal["test_set", "uploaded data"] = Field(..., description="data on which evaluation to be performed")
     dataset : str = Field(...,description="dataset to test if uploaded/test_set")
+
+
+class TableRequest(BaseModel):
+    """
+    Config for table request
+    """
+    user_session_id : str
+    table_name : str
+    table_kind : Literal["user_table","model_table","data_table"] = Field(...,description="table to show")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "user_session_id" : "-",
+                "table_name" : "dummy",
+                "table_kind" : "model_table"
+            }
+        } 
+
+class DownloadRequest(BaseModel):
+     """
+     Config for downloading a model
+     """
+
+     user_session_id : str
+     is_best : bool = False
+     model_name : str
+     kind : Literal["Classification", "Regression", "Clustering"]
+     
+     

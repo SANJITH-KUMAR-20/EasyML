@@ -60,8 +60,8 @@ class Splitter:
             if self.strategy == "random split":
                 y = self.data[[self.column]]
                 self.data.drop([self.column],axis = 1, inplace=True)
-                x_train,y_train = self._random_split(self.data,y, split_size)
-                return x_train, y_train
+                x_train,y_train,x_test,y_test = self._random_split(self.data,y, split_size)
+                return x_train, y_train,x_test,y_test
             else:
                 pass
         except Exception as e:
@@ -72,7 +72,7 @@ class Splitter:
         function to perform normal train_test split
         """
         x_train,x_test,y_train,y_test = train_test_split(data,y,test_size= 1 - split_size, shuffle=True)
-        return x_train,y_train
+        return x_train,y_train,x_test,y_test
 
 
 class LinearReg(Model):
